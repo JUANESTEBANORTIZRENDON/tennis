@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block page_heading %}{{ title }}{% endblock %}
+{% block content %}
+  {% if can_write %}
+    <section class="two-column mb-4">
+            {% url 'official_create' as official_create_url %}
+      {% url 'official_assign' as official_assign_url %}
+      {% include "shared/collapsible_form.html" with title="Crear oficial" form=official_form action=official_create_url submit_label="Crear" %}
+      {% include "shared/collapsible_form.html" with title="Asignar a partido" form=assign_form action=official_assign_url submit_label="Asignar" %}
+    </section>
+  {% endif %}
+  <section class="panel-card">
+        <p class="eyebrow mb-1">Oficiales</p>
+    <h2 class="section-title">{{ title }}</h2>
+    <p class="text-muted">{{ subtitle }}</p>
+    {% include "shared/table.html" with rows=rows columns=columns empty_message=empty_message %}
+  </section>
+{% endblock %}

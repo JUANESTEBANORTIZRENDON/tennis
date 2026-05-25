@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block page_heading %}Categorías y cuadros{% endblock %}
+{% block content %}
+  <section class="hero-panel mb-4">
+    <div>
+      <p class="eyebrow mb-1">Estructura competitiva</p>
+      <h2>Tournament > Category > SubCategory > Round</h2>
+      <p class="mb-0"><strong>SubCategory</strong> = cuadro competitivo. <strong>Round</strong> = fase dentro del cuadro.</p>
+    </div>
+  </section>
+
+  <section class="panel-card mb-4">
+    <form method="get" action="{% url 'category_tree' %}" class="row g-3 align-items-end">
+      <div class="col-12 col-md-6 col-xl-4">
+        <label class="form-label" for="tournament-selector">Torneo activo</label>
+        <select id="tournament-selector" name="tournament_id" class="form-select" onchange="this.form.submit()">
+          {% for tournament in tournament_options %}
+            <option value="{{ tournament.id }}" {% if tournament.selected %}selected{% endif %}>{{ tournament.label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-auto">
+        <button class="btn btn-outline-primary" type="submit">Aplicar</button>
+      </div>
+    </form>
+  </section>
+
+  {% if can_write %}
+    <section class="three-column mb-4">
+      {% include "shared/collapsible_form.html" with title="Crear categoría" form=category_form action=category_create_url submit_label="Crear" %}
+      {% include "shared/collapsible_form.html" with title="Crear cuadro" form=subcategory_form action=subcategory_create_url submit_label="Crear" %}
+      {% include "shared/collapsible_form.html" with title="Crear ronda" form=round_form action=round_create_url submit_label="Crear" %}
+    </section>
+    <section class="panel-card mb-4">
+      <div class="d-flex justify-content-between align-items-center gap-3 flex-wrap">
+        <div>
+          <p class="eyebrow mb-1">Rondas automaticas</p>
+          <h2 class="section-title mb-0">Organizar rondas por tamano de cuadro</h2>
+        </div>
+        <form method="post" action="{{ round_generate_url }}">
+          {% csrf_token %}
+          <input type="hidden" name="tournament_id" value="{{ selected_tournament_id }}">
+          <button class="btn btn-court" type="submit">Generar rondas del torneo</button>
+        </form>
+      </div>
+    </section>
+  {% endif %}
+
+  <section class="panel-card mb-4">
+    <h2 class="section-title">Categorías</h2>
+    {% include "shared/table.html" with rows=tree.categories columns=category_columns empty_message="No hay categorías." %}
+  </section>
+  <section class="panel-card mb-4">
+    <h2 class="section-title">Cuadros competitivos</h2>
+    {% include "shared/table.html" with rows=tree.subcategories columns=subcategory_columns empty_message="No hay cuadros." %}
+  </section>
+  <section class="panel-card">
+    <h2 class="section-title">Rondas</h2>
+    {% include "shared/table.html" with rows=tree.rounds columns=round_columns empty_message="No hay rondas." %}
+  </section>
+{% endblock %}

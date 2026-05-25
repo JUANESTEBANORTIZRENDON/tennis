@@ -1,0 +1,38 @@
+{% load grand_slam_extras %}
+{# Tabla reusable: rows vienen de Neon via servicios; columns ya fueron filtradas por presentation.py. #}
+<div class="table-responsive data-table-wrap">
+  <table class="table table-hover align-middle data-table">
+    <thead>
+      <tr>
+        {% for column in columns %}<th>{{ column|humanize_key }}</th>{% endfor %}
+        <th class="text-end">Acciones</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for row in rows %}
+        <tr>
+          {% for column in columns %}
+            {% with value=row|get_item:column %}
+              <td>
+                {% if column|is_status_column %}
+                  <span class="status-pill {{ value|badge_class }}">{% render_cell value column can_view_sensitive mask_plain_id %}</span>
+                {% else %}
+                  {% render_cell value column can_view_sensitive mask_plain_id %}
+                {% endif %}
+              </td>
+            {% endwith %}
+          {% endfor %}
+          <td class="text-end">
+            {% for action in row|get_item:"_actions" %}
+              <a class="btn btn-sm btn-outline-primary" href="{{ action.url }}">{{ action.label }}</a>
+            {% empty %}
+              <span class="text-muted">-</span>
+            {% endfor %}
+          </td>
+        </tr>
+      {% empty %}
+        <tr><td colspan="{{ columns|length|add:1 }}" class="text-center text-muted py-4">{{ empty_message|default:"No hay datos para mostrar." }}</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>

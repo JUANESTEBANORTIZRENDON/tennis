@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block page_heading %}Desarrollo de partidos{% endblock %}
+{% block content %}
+  <section class="hero-panel mb-4">
+    <div>
+      <p class="eyebrow mb-1">Operacion en cancha</p>
+      <h2>Partidos programados</h2>
+      <p class="mb-0">Solo se habilita el tablero para partidos programados en la fecha actual o que ya estan en progreso.</p>
+    </div>
+    <a class="btn btn-light" href="{% url 'match_list' %}">Configurar partidos</a>
+  </section>
+
+  <section class="panel-card">
+    <h2 class="section-title">Agenda operativa</h2>
+    {% include "shared/table.html" with rows=rows columns=columns empty_message=empty_message %}
+  </section>
+{% endblock %}

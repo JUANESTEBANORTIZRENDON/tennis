@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% load grand_slam_extras %}
+{% block page_heading %}Detalle de jugador{% endblock %}
+{% block content %}
+  <section class="panel-card mb-4">
+        <div class="d-flex justify-content-between align-items-start">
+      <div>
+        <p class="eyebrow mb-1">Jugador</p>
+        <h2 class="section-title">{{ player_name }}</h2>
+      </div>
+      <a class="btn btn-outline-secondary" href="{% url 'player_list' %}">Volver</a>
+    </div>
+    {% if player %}
+      <div class="detail-grid mt-3">
+        {% for column in player_columns %}
+          <div class="detail-item"><span>{{ column|humanize_key }}</span><strong>{% render_cell player|get_item:column column can_view_sensitive True %}</strong></div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <p class="text-muted">No se encontro el jugador.</p>
+    {% endif %}
+  </section>
+
+  <section class="panel-card">
+        <ul class="nav nav-pills mb-3" role="tablist">
+      {% for section in related_sections %}
+        <li class="nav-item"><button class="nav-link {% if forloop.first %}active{% endif %}" data-bs-toggle="pill" data-bs-target="#{{ section.key }}" type="button">{{ section.key|humanize_key }}</button></li>
+      {% endfor %}
+    </ul>
+    <div class="tab-content">
+      {% for section in related_sections %}
+        <div class="tab-pane fade {% if forloop.first %}show active{% endif %}" id="{{ section.key }}">
+          {% include "shared/table.html" with rows=section.rows columns=section.columns empty_message="Sin datos en esta pestana." %}
+        </div>
+      {% endfor %}
+    </div>
+  </section>
+{% endblock %}

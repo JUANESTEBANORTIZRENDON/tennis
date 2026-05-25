@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block page_heading %}Programacion{% endblock %}
+{% block content %}
+  {% if can_write %}
+    <section class="two-column mb-4">
+            {% url 'session_create' as session_create_url %}
+      {% url 'session_match_add' as session_match_add_url %}
+      {% include "shared/collapsible_form.html" with title="Crear sesion" form=session_form action=session_create_url submit_label="Crear" %}
+      {% include "shared/collapsible_form.html" with title="Asociar partido" form=session_match_form action=session_match_add_url submit_label="Asociar" %}
+    </section>
+  {% endif %}
+
+  <section class="panel-card mb-4">
+        <h2 class="section-title">Sesiones</h2>
+    {% include "shared/table.html" with rows=sessions columns=session_columns empty_message="No hay sesiones." %}
+  </section>
+  <section class="panel-card">
+        <h2 class="section-title">Partidos</h2>
+    {% include "shared/table.html" with rows=matches columns=match_columns empty_message="No hay partidos." %}
+  </section>
+{% endblock %}

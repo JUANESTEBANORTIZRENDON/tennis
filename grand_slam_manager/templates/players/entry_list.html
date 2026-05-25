@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block page_heading %}{{ title }}{% endblock %}
+{% block content %}
+  <section class="panel-card mb-4">
+    <form method="get" action="{% url 'entry_list' %}" class="row g-3 align-items-end">
+      <div class="col-12 col-md-4">
+        <label class="form-label" for="entry-tournament">Torneo</label>
+        <select id="entry-tournament" name="tournament_id" class="form-select" onchange="this.form.submit()">
+          {% for tournament in tournament_options %}
+            <option value="{{ tournament.id }}" {% if tournament.selected %}selected{% endif %}>{{ tournament.label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-12 col-md-4">
+        <label class="form-label" for="entry-category">Categoría</label>
+        <select id="entry-category" name="category_id" class="form-select" onchange="this.form.submit()">
+          {% for category in category_options %}
+            <option value="{{ category.id }}" {% if category.selected %}selected{% endif %}>{{ category.label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-12 col-md-4">
+        <label class="form-label" for="entry-subcategory">Cuadro</label>
+        <select id="entry-subcategory" name="subcategory_id" class="form-select" onchange="this.form.submit()">
+          {% for subcategory in subcategory_options %}
+            <option value="{{ subcategory.id }}" {% if subcategory.selected %}selected{% endif %}>{{ subcategory.label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-auto">
+        <button class="btn btn-outline-primary" type="submit">Aplicar</button>
+      </div>
+    </form>
+  </section>
+
+  {% if can_write %}
+    <section class="narrow-card mb-4">
+      {% include "shared/collapsible_form.html" with title="Inscribir equipo en cuadro" form=entry_form action=entry_create_url submit_label="Inscribir" %}
+    </section>
+  {% endif %}
+  <section class="panel-card">
+    <p class="eyebrow mb-1">Inscripciones</p>
+    <h2 class="section-title">{{ title }}</h2>
+    <p class="text-muted">{{ subtitle }}</p>
+    {% include "shared/table.html" with rows=rows columns=columns empty_message=empty_message %}
+  </section>
+{% endblock %}

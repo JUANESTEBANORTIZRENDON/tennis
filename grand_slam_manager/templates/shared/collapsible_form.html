@@ -1,0 +1,14 @@
+<details class="form-disclosure compact-card" {% if form.errors %}open{% endif %}>
+  <summary>
+    <span>
+      <small>{{ eyebrow|default:"Formulario" }}</small>
+      <strong>{{ title }}</strong>
+    </span>
+    <b>Abrir</b>
+  </summary>
+  <form method="post" action="{{ action }}" novalidate>
+    {% csrf_token %}
+        {% include "shared/form_fields.html" with form=form %}
+    <button class="btn btn-court w-100" type="submit">{{ submit_label|default:"Guardar" }}</button>
+  </form>
+</details>

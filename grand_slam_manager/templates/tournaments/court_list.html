@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block page_heading %}{{ title }}{% endblock %}
+{% block content %}
+  <section class="panel-card">
+        <div class="d-flex flex-wrap justify-content-between gap-3 align-items-start mb-3">
+      <div>
+        <p class="eyebrow mb-1">Canchas</p>
+        <h2 class="section-title mb-1">{{ title }}</h2>
+        <p class="text-muted mb-0">{{ subtitle }}</p>
+      </div>
+      {% if can_write %}<a class="btn btn-court" href="{{ primary_action_url }}">{{ primary_action_label }}</a>{% endif %}
+    </div>
+    <div class="surface-note mb-3">Si <strong>surface_matches</strong> aparece como No, revisa la cancha antes de programar partidos.</div>
+        {% include "shared/table.html" with rows=rows columns=columns empty_message=empty_message %}
+  </section>
+{% endblock %}

@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+{% block page_heading %}Desarrollo de partido{% endblock %}
+{% block content %}
+  <section class="scoreboard-shell mb-4">
+    {% with score=detail.score %}
+    <div class="scoreboard-top">
+      <span>{{ match.cancha|default:"Cancha por definir" }}</span>
+      <strong>Match #{{ match_id }}</strong>
+      <em>{{ match.estado|default:"Sin estado" }}</em>
+    </div>
+    <div class="scoreboard-grid">
+      <div class="scoreboard-label">Sets previos</div>
+      <div class="scoreboard-label">Jugador</div>
+      <div class="scoreboard-label">Sets</div>
+      <div class="scoreboard-label">Games</div>
+      <div class="scoreboard-label">Puntos</div>
+
+      <div class="previous-sets">
+        {% for set in detail.completed_sets %}
+          <span>{{ set.team_a_games|default:"0" }}</span>
+        {% empty %}
+          <span>-</span>
+        {% endfor %}
+      </div>
+      <div class="score-player">{{ match.jugador_a|default:"Jugador A" }}</div>
+      <div class="score-number">{{ detail.sets_a|default:"0" }}</div>
+      <div class="score-number">{{ score.games_a|default:"0" }}</div>
+      <div class="score-number point-score">{{ score.point_label_a|default:"0" }}</div>
+
+      <div class="previous-sets">
+        {% for set in detail.completed_sets %}
+          <span>{{ set.team_b_games|default:"0" }}</span>
+        {% empty %}
+          <span>-</span>
+        {% endfor %}
+      </div>
+      <div class="score-player">{{ match.jugador_b|default:"Jugador B" }}</div>
+      <div class="score-number">{{ detail.sets_b|default:"0" }}</div>
+      <div class="score-number">{{ score.games_b|default:"0" }}</div>
+      <div class="score-number point-score">{{ score.point_label_b|default:"0" }}</div>
+    </div>
+    {% endwith %}
+  </section>
+
+  {% if can_write and match.estado != "Completed" %}
+    <section class="quick-actions mb-4">
+      <article class="panel-card compact-card">
+        <h3 class="mini-title">Estado</h3>
+        <div class="d-grid gap-2">
+          <form method="post" action="{% url 'match_start' match_id %}">{% csrf_token %}<button class="btn btn-court w-100" type="submit">Iniciar partido</button></form>
+          <form method="post" action="{% url 'match_status' match_id 'Suspended' %}">{% csrf_token %}<button class="btn btn-outline-secondary w-100" type="submit">Suspender</button></form>
+          <form method="post" action="{% url 'match_status' match_id 'InProgress' %}">{% csrf_token %}<button class="btn btn-outline-primary w-100" type="submit">Reanudar</button></form>
+        </div>
+      </article>
+      <article class="panel-card compact-card point-panel">
+        <h3 class="mini-title">Marcador por punto</h3>
+        <p class="text-muted mb-3">Set {{ detail.score.set_number|default:"1" }} · Game {{ detail.score.game_number|default:"1" }}</p>
+        <div class="point-controls">
+          <form method="post" action="{% url 'match_play_point' match_id 'A' %}">
+            {% csrf_token %}
+            <button class="btn btn-player-a w-100" type="submit" {% if match.estado != "InProgress" %}disabled{% endif %}>Punto {{ match.jugador_a|default:"Jugador A" }}</button>
+          </form>
+          <form method="post" action="{% url 'match_play_point' match_id 'B' %}">
+            {% csrf_token %}
+            <button class="btn btn-player-b w-100" type="submit" {% if match.estado != "InProgress" %}disabled{% endif %}>Punto {{ match.jugador_b|default:"Jugador B" }}</button>
+          </form>
+        </div>
+      </article>
+      {% include "shared/collapsible_form.html" with eyebrow="Cierre" title="Finalizar partido" form=finish_form action=match_play_finish_url submit_label="Finalizar" %}
+    </section>
+  {% elif match.estado == "Completed" %}
+    <section class="panel-card mb-4">
+      <h2 class="section-title">Partido finalizado</h2>
+      <p class="mb-0">Ganador: <strong>{{ detail.winner_name|default:"Equipo ganador registrado" }}</strong></p>
+    </section>
+  {% endif %}
+
+  <section class="role-action-grid mb-4">
+    <a class="role-action-card action-match-center" href="{% url 'match_center' match_id %}">
+      <span>Operación</span>
+      <strong>Ver Match Center</strong>
+    </a>
+    <a class="role-action-card action-schedule" href="{% url 'injury_register' %}">
+      <span>Medico</span>
+      <strong>Añadir lesión</strong>
+    </a>
+    <a class="role-action-card action-tournament" href="{% url 'sanction_list' %}?match_id={{ match_id }}">
+      <span>Disciplina</span>
+      <strong>Añadir sanción</strong>
+    </a>
+  </section>
+
+  <section class="panel-card">
+    <h2 class="section-title">Sets registrados</h2>
+    <div class="table-responsive data-table-wrap">
+      <table class="table table-hover align-middle data-table">
+        <thead><tr><th>Set</th><th>Games A</th><th>Games B</th><th>Tiebreak A</th><th>Tiebreak B</th><th>Ganador</th></tr></thead>
+        <tbody>
+          {% for set in detail.sets %}
+            <tr>
+              <td>{{ set.set_number }}</td>
+              <td>{{ set.team_a_games }}</td>
+              <td>{{ set.team_b_games }}</td>
+              <td>{{ set.tie_break_a|default:"-" }}</td>
+              <td>{{ set.tie_break_b|default:"-" }}</td>
+              <td>{{ set.winner_team_id }}</td>
+            </tr>
+          {% empty %}
+            <tr><td colspan="6" class="text-center text-muted py-4">Aun no hay sets registrados.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+{% endblock %}

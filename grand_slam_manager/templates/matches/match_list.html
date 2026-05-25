@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% block page_heading %}{{ title }}{% endblock %}
+{% block content %}
+  <section class="hero-panel mb-4">
+    <div>
+      <p class="eyebrow mb-1">Configuracion de partidos</p>
+      <h2>Match Center</h2>
+      <p class="mb-0">Filtra por torneo, categoría y ronda antes de crear o revisar partidos.</p>
+    </div>
+    {% if can_write and primary_action_url %}<a class="btn btn-light" href="{{ primary_action_url }}">Crear partido</a>{% endif %}
+  </section>
+
+  <section class="panel-card mb-4">
+    <form method="get" action="{% url 'match_list' %}" class="row g-3 align-items-end">
+      <div class="col-12 col-md-4">
+        <label class="form-label" for="match-tournament">Torneo</label>
+        <select id="match-tournament" name="tournament_id" class="form-select" onchange="this.form.submit()">
+          {% for tournament in tournament_options %}
+            <option value="{{ tournament.id }}" {% if tournament.selected %}selected{% endif %}>{{ tournament.label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-12 col-md-4">
+        <label class="form-label" for="match-category">Categoría</label>
+        <select id="match-category" name="category_id" class="form-select" onchange="this.form.submit()">
+          {% for category in category_options %}
+            <option value="{{ category.id }}" {% if category.selected %}selected{% endif %}>{{ category.label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-12 col-md-4">
+        <label class="form-label" for="match-round">Ronda</label>
+        <select id="match-round" name="round_id" class="form-select" onchange="this.form.submit()">
+          {% for round in round_options %}
+            <option value="{{ round.id }}" {% if round.selected %}selected{% endif %}>{{ round.label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-auto">
+        <button class="btn btn-outline-primary" type="submit">Aplicar</button>
+      </div>
+    </form>
+  </section>
+
+  {% if can_write %}
+    <section class="panel-card mb-4">
+      <div class="d-flex justify-content-between align-items-center gap-3 flex-wrap">
+        <div>
+          <p class="eyebrow mb-1">Primera ronda</p>
+          <h2 class="section-title mb-0">Organizar emparejamientos</h2>
+        </div>
+        <div class="d-flex gap-2 flex-wrap">
+          <form method="post" action="{{ pairing_random_url }}">
+            {% csrf_token %}
+            <button class="btn btn-outline-primary" type="submit">Sorteo aleatorio</button>
+          </form>
+          <form method="post" action="{{ pairing_ordered_url }}">
+            {% csrf_token %}
+            <button class="btn btn-court" type="submit">Por siembra/ranking</button>
+          </form>
+        </div>
+      </div>
+    </section>
+  {% endif %}
+
+  <section class="panel-card">
+    <p class="eyebrow mb-1">Partidos</p>
+    <h2 class="section-title">{{ title }}</h2>
+    <p class="text-muted">{{ subtitle }}</p>
+    {% include "shared/table.html" with rows=rows columns=columns empty_message=empty_message %}
+  </section>
+{% endblock %}

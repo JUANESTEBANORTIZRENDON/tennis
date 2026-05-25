@@ -1,0 +1,132 @@
+{% extends "base.html" %}
+{% load grand_slam_extras %}
+{% block page_heading %}Dashboard{% endblock %}
+{% block content %}
+  <section class="hero-panel mb-4">
+        <div>
+      <p class="eyebrow mb-1">{% if is_admin_panel %}Gobierno del sistema{% else %}Operación del torneo{% endif %}</p>
+      <h2>{% if is_admin_panel %}Control, usuarios y trazabilidad{% else %}Resumen competitivo y deportivo{% endif %}</h2>
+      <p class="mb-0">
+        {% if is_admin_panel %}
+          Perfil enfocado en cuentas internas, auditoria y supervision general.
+        {% else %}
+          Perfil enfocado en torneos, jugadores, partidos y programación.
+        {% endif %}
+      </p>
+    </div>
+  </section>
+
+  <section class="role-action-grid mb-4">
+        {% if is_admin_panel %}
+      <a class="role-action-card" href="{% url 'user_list' %}">
+        <span>Usuarios</span>
+        <strong>Crear y revisar cuentas internas</strong>
+      </a>
+      <a class="role-action-card" href="{% url 'audit_list' %}">
+        <span>Auditoria</span>
+        <strong>Consultar trazabilidad del sistema</strong>
+      </a>
+      <a class="role-action-card" href="{% url 'sanction_list' %}">
+        <span>Control</span>
+        <strong>Supervisar sanciones registradas</strong>
+      </a>
+    {% else %}
+      <a class="role-action-card action-tournament" href="{% url 'tournament_list' %}">
+        <span>Torneos</span>
+        <strong>Administrar el torneo activo</strong>
+      </a>
+      <a class="role-action-card action-match-center" href="{% url 'match_list' %}">
+        <span>Partidos</span>
+        <strong>Entrar al Match Center</strong>
+      </a>
+      <a class="role-action-card action-schedule" href="{% url 'schedule_list' %}">
+        <span>Programación</span>
+        <strong>Organizar agenda y sesiones</strong>
+      </a>
+    {% endif %}
+  </section>
+
+  <section class="metric-grid mb-4">
+        <article class="metric-card"><span>Torneos</span><strong>{{ metrics.tournaments }}</strong></article>
+    <article class="metric-card"><span>Partidos programados</span><strong>{{ metrics.scheduled_matches }}</strong></article>
+    <article class="metric-card"><span>Jugadores</span><strong>{{ metrics.players }}</strong></article>
+    <article class="metric-card"><span>Lesiones activas</span><strong>{{ metrics.active_injuries }}</strong></article>
+    <article class="metric-card"><span>Sanciones</span><strong>{{ metrics.recent_sanctions }}</strong></article>
+  </section>
+
+  <section class="panel-card mb-4">
+    <div class="section-head mb-3">
+      <div>
+        <p class="eyebrow mb-1">Desarrollo del torneo</p>
+        <h2 class="section-title mb-0">Diagrama competitivo</h2>
+      </div>
+      <form method="get" action="{% url 'dashboard' %}" class="dashboard-bracket-filter">
+        <label class="form-label visually-hidden" for="dashboard-tournament">Torneo</label>
+        <select id="dashboard-tournament" name="tournament_id" class="form-select" onchange="this.form.submit()">
+          {% for tournament in tournament_options %}
+            <option value="{{ tournament.id }}" {% if tournament.selected %}selected{% endif %}>{{ tournament.label }}</option>
+          {% endfor %}
+        </select>
+      </form>
+    </div>
+    {% if bracket.brackets %}
+      {% for draw in bracket.brackets %}
+        <article class="bracket-board mb-4">
+          <div class="bracket-board-head">
+            <div>
+              <span>{{ draw.categoria }}</span>
+              <strong>{{ draw.cuadro }}</strong>
+            </div>
+            <em>{{ draw.entry_count }}/{{ draw.draw_size }} inscritos</em>
+          </div>
+          <div class="bracket-track">
+            {% if draw.rounds %}
+              {% for round in draw.rounds %}
+                <div class="bracket-round">
+                  <h3>{{ round.round_name }}</h3>
+                  {% for match in round.matches %}
+                    <div class="bracket-match {% if match.winner %}is-decided{% endif %}">
+                      <span>{{ match.team_a|default:"Pendiente" }}</span>
+                      <span>{{ match.team_b|default:"Pendiente" }}</span>
+                      {% if match.winner %}<strong>{{ match.winner }}</strong>{% endif %}
+                    </div>
+                  {% empty %}
+                    <div class="bracket-empty">Sin partidos generados</div>
+                  {% endfor %}
+                </div>
+              {% endfor %}
+            {% else %}
+              <div class="bracket-round">
+                <h3>Inscripciones</h3>
+                {% for entry in draw.entries %}
+                  <div class="bracket-match">
+                    <span>{{ entry.equipo }}</span>
+                    <small>{% if entry.seed %}Seed {{ entry.seed }}{% else %}Sin siembra{% endif %}</small>
+                  </div>
+                {% empty %}
+                  <div class="bracket-empty">Sin inscritos</div>
+                {% endfor %}
+                {% if draw.available_slots %}
+                  <div class="bracket-empty">{{ draw.available_slots }} cupos pendientes</div>
+                {% endif %}
+              </div>
+            {% endif %}
+          </div>
+        </article>
+      {% endfor %}
+    {% else %}
+      <p class="text-muted mb-0">Este torneo aún no tiene categorías o cuadros para mostrar.</p>
+    {% endif %}
+  </section>
+
+  <section class="panel-card">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+      <div>
+        <p class="eyebrow mb-1">Agenda</p>
+        <h2 class="section-title mb-0">Proximos partidos</h2>
+      </div>
+      <a class="btn btn-outline-primary" href="{% url 'match_list' %}">Ver Match Center</a>
+    </div>
+    {% include "shared/table.html" with rows=upcoming_matches columns=match_columns empty_message="No hay partidos para mostrar." %}
+  </section>
+{% endblock %}

@@ -1,0 +1,18 @@
+{# Render centralizado de campos Django; los choices ya llegan cargados desde form_choices/servicios. #}
+{% for field in form %}
+  {% if field.is_hidden %}
+    {{ field }}
+  {% else %}
+    <div class="mb-3 form-field form-field-{{ field.name }}">
+      <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+      {{ field }}
+      {% if field.help_text %}<div class="form-text">{{ field.help_text }}</div>{% endif %}
+      {% for error in field.errors %}<div class="invalid-note">{{ error }}</div>{% endfor %}
+    </div>
+  {% endif %}
+{% endfor %}
+{% if form.non_field_errors %}
+  <div class="alert alert-warning">
+    {% for error in form.non_field_errors %}<div>{{ error }}</div>{% endfor %}
+  </div>
+{% endif %}

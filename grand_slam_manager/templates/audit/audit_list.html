@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block page_heading %}{{ title }}{% endblock %}
+{% block content %}
+  <section class="panel-card mb-4">
+        <p class="eyebrow mb-1">Filtros</p>
+    <form class="filter-grid" method="get">
+      {% include "shared/form_fields.html" with form=filter_form %}
+      <button class="btn btn-court align-self-end" type="submit">Filtrar</button>
+    </form>
+  </section>
+  <section class="panel-card">
+        <div class="mb-3">
+      <p class="eyebrow mb-1">Auditoria</p>
+      <h2 class="section-title mb-1">{{ title }}</h2>
+      <p class="text-muted mb-0">{{ subtitle }}</p>
+    </div>
+    {% include "shared/table.html" with rows=rows columns=columns empty_message=empty_message %}
+  </section>
+{% endblock %}

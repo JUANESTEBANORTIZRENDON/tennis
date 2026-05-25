@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+{% block page_heading %}{{ title }}{% endblock %}
+{% block content %}
+  {% if can_write %}
+        <div class="surface-note mb-3">
+      En este formulario se selecciona quien recibe la sancion. El director u oficial que la registra queda guardado automaticamente con la sesion actual.
+    </div>
+    <section class="two-column mb-4">
+            {% include "shared/collapsible_form.html" with title="Crear sancion" form=sanction_form action=create_url submit_label="Crear" %}
+      {% include "shared/collapsible_form.html" with title="Crear apelacion" form=appeal_form action=appeal_url submit_label="Crear" %}
+    </section>
+  {% endif %}
+  {{ sanction_team_player_map|json_script:"sanction-team-player-map" }}
+
+  <script>
+    (() => {
+      const mapEl = document.getElementById("sanction-team-player-map");
+      const teamPlayerMap = mapEl ? JSON.parse(mapEl.textContent) : {};
+      const sanctionForm = document.querySelector('form[action="{{ create_url }}"]');
+      if (!sanctionForm) return;
+
+      const field = (name) => sanctionForm.querySelector(`.form-field-${name}`);
+      const targetInputs = sanctionForm.querySelectorAll('input[name="target_type"]');
+      const teamSelect = sanctionForm.querySelector('[name="team_id"]');
+      const playerSelect = sanctionForm.querySelector('[name="player_id"]');
+
+      const sections = {
+        team_player: [field("team_id"), field("player_id")],
+        official: [field("official_id")],
+      };
+      const allSubjectFields = Object.values(sections).flat().filter(Boolean);
+
+      function selectedTarget() {
+        const checked = sanctionForm.querySelector('input[name="target_type"]:checked');
+        return checked ? checked.value : "team_player";
+      }
+
+      function toggleTargetFields() {
+        const target = selectedTarget();
+        allSubjectFields.forEach((node) => node.classList.add("is-hidden"));
+        (sections[target] || []).forEach((node) => node && node.classList.remove("is-hidden"));
+
+        if (target !== "team_player" && playerSelect) playerSelect.value = "";
+        if (target !== "team_player" && teamSelect) teamSelect.value = "";
+        if (target !== "official") {
+          const official = sanctionForm.querySelector('[name="official_id"]');
+          if (official) official.value = "";
+        }
+        filterPlayersByTeam();
+      }
+
+      function filterPlayersByTeam() {
+        if (!teamSelect || !playerSelect) return;
+        const selectedTeam = String(teamSelect.value || "");
+        const allowedPlayers = new Set(teamPlayerMap[selectedTeam] || []);
+        Array.from(playerSelect.options).forEach((option) => {
+          if (!option.value) {
+            option.hidden = false;
+            return;
+          }
+          option.hidden = selectedTeam ? !allowedPlayers.has(String(option.value)) : true;
+        });
+        if (playerSelect.value && playerSelect.selectedOptions[0]?.hidden) {
+          playerSelect.value = "";
+        }
+      }
+
+      targetInputs.forEach((input) => input.addEventListener("change", toggleTargetFields));
+      if (teamSelect) teamSelect.addEventListener("change", filterPlayersByTeam);
+      toggleTargetFields();
+    })();
+  </script>
+
+  <section class="panel-card mb-4">
+        <p class="eyebrow mb-1">Sanciones</p>
+    <h2 class="section-title">{{ title }}</h2>
+    <p class="text-muted">{{ subtitle }}</p>
+    {% include "shared/table.html" with rows=sanctions columns=sanction_columns empty_message="No hay sanciones." %}
+  </section>
+  <section class="panel-card mb-4">
+        <h2 class="section-title">Tipos de infraccion</h2>
+    {% include "shared/table.html" with rows=infraction_types columns=infraction_columns empty_message="No hay tipos de infraccion." %}
+  </section>
+  <section class="panel-card">
+        <h2 class="section-title">Apelaciones</h2>
+    {% include "shared/table.html" with rows=appeals columns=appeal_columns empty_message="No hay apelaciones." %}
+  </section>
+{% endblock %}

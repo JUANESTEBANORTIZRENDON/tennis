@@ -1,0 +1,29 @@
+from django.db import migrations
+
+
+class Migration(migrations.Migration):
+    dependencies = [
+        ("core", "0001_baseline_neon_schema"),
+    ]
+
+    operations = [
+        migrations.RunSQL(
+            sql="""
+            -- Ejemplo:
+            -- ALTER TABLE "Player" ADD COLUMN IF NOT EXISTS "nickname" varchar(120);
+            --
+            -- CREATE OR REPLACE PROCEDURE "sp_example"(...)
+            -- LANGUAGE plpgsql
+            -- AS $$
+            -- BEGIN
+            --   -- logica del procedimiento
+            -- END;
+            -- $$;
+            """,
+            reverse_sql="""
+            -- Ejemplo:
+            -- DROP PROCEDURE IF EXISTS "sp_example"(...);
+            -- ALTER TABLE "Player" DROP COLUMN IF EXISTS "nickname";
+            """,
+        ),
+    ]

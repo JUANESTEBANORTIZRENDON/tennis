@@ -1,0 +1,1285 @@
+/*
+  Archivo: static/css/app.css
+  Proposito: hoja principal compartida por el panel interno y varias pantallas
+  publicas. Si necesitas modificar la apariencia global, empieza aqui.
+
+  Mapa de lectura:
+  1. Variables de color y tipografia base.
+  2. Layout del panel interno: sidebar, topbar, contenido y tarjeta de usuario.
+  3. Variantes por rol: administrador y director de torneo.
+  4. Componentes visuales reutilizables: heroes, cards, metricas, botones,
+     tablas, badges, grids y notas.
+  5. Formularios reutilizables: formularios plegables y campos especiales.
+  6. Pantallas publicas: landing, tarjetas de torneos y jugadores.
+  7. Responsive: cortes para tablet y movil.
+*/
+
+/* 1. Tokens globales: estos colores alimentan tarjetas, bordes, sidebar,
+   botones y textos secundarios. Las variantes por rol sobrescriben parte de
+   estas variables para cambiar el tema sin duplicar componentes. */
+:root {
+  --ink: #102033;
+  --navy: #102a43;
+  --navy-2: #0b1b2b;
+  --grass: #a06a18;
+  --grass-dark: #0f7a43;
+  --gold: #d6a533;
+  --paper: #f6f8fb;
+  --line: #dbe3ef;
+  --muted: #6b7a90;
+}
+
+/* Reset minimo: evita que padding y borde aumenten el ancho real de elementos. */
+* { box-sizing: border-box; }
+
+/* Base general del panel. El fondo combina una luz radial y un degradado claro.
+   Las pantallas publicas pueden sobrescribir body con clases propias. */
+body {
+  margin: 0;
+  color: var(--ink);
+  background:
+    radial-gradient(circle at top left, rgba(24,160,88,.16), transparent 28rem),
+    linear-gradient(135deg, #f8fbff 0%, #eef4f0 100%);
+  font-family: "Trebuchet MS", "Aptos", Verdana, sans-serif;
+}
+
+/* Tema visual del panel administrador: tonos rojos, fondo mas claro y variables
+   que reutilizan los mismos componentes del panel. */
+body.panel-admin {
+  --navy: #2a1014;
+  --navy-2: #16080b;
+  --grass: #c81e34;
+  --grass-dark: #8f1020;
+  --gold: #ffb4ad;
+  --line: #ead7d9;
+  --muted: #786066;
+  background:
+    linear-gradient(135deg, #fff8f7 0%, #f4ecee 100%);
+}
+
+/* Tema visual del director: tonos azules/verdes y acento dorado deportivo. */
+body.panel-director {
+  --navy: #17344c;
+  --navy-2: #0b1f2f;
+  --grass: #b07a18;
+  --grass-dark: #0f7a43;
+  --gold: #d6a533;
+}
+
+/* 2. Shell interno: estructura de sidebar + contenido principal. */
+a { text-decoration: none; }
+.app-shell { display: flex; min-height: 100vh; }
+
+/* Sidebar por defecto. Controla ancho fijo, scroll interno y posicion sticky. */
+.sidebar {
+  width: 280px;
+  flex: 0 0 280px;
+  background: linear-gradient(180deg, var(--navy-2), var(--navy));
+  color: white;
+  padding: 1.5rem 1rem;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
+  box-shadow: 12px 0 32px rgba(16,32,51,.12);
+}
+
+/* Bloque de marca del sidebar: nombre del producto, panel activo y subtitulo. */
+.brand-block {
+  border: 1px solid rgba(255,255,255,.18);
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 1.2rem;
+  background: rgba(255,255,255,.08);
+}
+.brand-block strong { display: block; font-size: 1.55rem; line-height: 1.12; letter-spacing: 0; }
+.brand-block small {
+  display: block;
+  margin-top: .25rem;
+  color: rgba(255,255,255,.68);
+  font-weight: 700;
+}
+
+/* Texto pequeno en mayusculas usado como eyebrow en marca, titulos y cards. */
+.brand-kicker, .eyebrow {
+  color: var(--gold);
+  text-transform: uppercase;
+  letter-spacing: .13em;
+  font-size: .72rem;
+  font-weight: 800;
+}
+.brand-kicker {
+  display: block;
+  margin-bottom: .45rem;
+  font-size: .88rem;
+}
+
+/* Links del menu lateral. Si agregas items en context_processors.py, heredan
+   estos estilos automaticamente. */
+.sidebar-nav .nav-link {
+  color: rgba(255,255,255,.82);
+  border-radius: 8px;
+  margin: .15rem 0;
+  padding: .72rem .9rem;
+  transition: all .18s ease;
+}
+.sidebar-nav .nav-link:hover { background: rgba(255,255,255,.12); color: #fff; transform: translateX(3px); }
+.sidebar-nav .nav-link.is-active {
+  background: rgba(255,255,255,.18);
+  color: #fff;
+  box-shadow: inset 4px 0 0 var(--gold);
+}
+
+/* Titulos de grupo del menu: Inicio, Sistema, Torneo, Competencia, Operacion. */
+.nav-group-label {
+  display: block;
+  margin: 1rem .55rem .35rem;
+  color: rgba(255,255,255,.46);
+  font-size: .7rem;
+  font-weight: 900;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+}
+/* 3. Overrides de rol: administrador.
+   Cambia el layout completo: el sidebar vertical se convierte en barra superior. */
+.panel-admin .app-shell { display: block; }
+.panel-admin .sidebar {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  width: 100%;
+  height: auto;
+  min-height: 86px;
+  display: grid;
+  grid-template-columns: 240px minmax(0, 1fr);
+  gap: 1rem;
+  align-items: center;
+  padding: .8rem 1rem;
+  overflow-x: auto;
+  overflow-y: hidden;
+  background:
+    linear-gradient(90deg, #16080b 0%, #3b1118 44%, #951827 100%);
+  box-shadow: 0 18px 42px rgba(70, 8, 18, .28);
+}
+
+/* Marca compacta dentro de la barra superior administrativa. */
+.panel-admin .brand-block {
+  min-height: 62px;
+  margin: 0;
+  padding: .7rem .85rem;
+  border-color: rgba(255,255,255,.18);
+  background: rgba(255,255,255,.08);
+}
+.panel-admin .brand-block strong {
+  font-size: 1.35rem;
+  letter-spacing: 0;
+}
+.panel-admin .brand-kicker,
+.panel-admin .eyebrow {
+  color: #ffb4ad;
+}
+
+/* Navegacion horizontal del administrador. Usa min-width:max-content para
+   permitir scroll horizontal si hay muchos enlaces. */
+.panel-admin .sidebar-nav {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center;
+  gap: .5rem;
+  min-width: max-content;
+}
+.panel-admin .nav-group-label {
+  margin: 0 .25rem 0 .85rem;
+  color: rgba(255,255,255,.54);
+}
+.panel-admin .sidebar-nav .nav-link {
+  margin: 0;
+  min-height: 2.5rem;
+  display: inline-flex;
+  align-items: center;
+  padding: .55rem .8rem;
+  border: 1px solid rgba(255,255,255,.12);
+  background: rgba(255,255,255,.07);
+  color: rgba(255,255,255,.9);
+  white-space: nowrap;
+}
+.panel-admin .sidebar-nav .nav-link:hover {
+  background: #fff;
+  color: #951827;
+  transform: translateY(-1px);
+}
+.panel-admin .sidebar-nav .nav-link.is-active {
+  background: #fff;
+  color: #951827;
+  box-shadow: inset 0 -3px 0 #ffb4ad;
+}
+
+/* Contenido del administrador: limita ancho y centra en pantallas grandes. */
+.panel-admin .content-panel {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 1.4rem 1.5rem 2rem;
+}
+
+/* Topbar administrativa: separa encabezado de contenido con linea sutil. */
+.panel-admin .topbar {
+  padding: 1rem 0 1.2rem;
+  border-bottom: 1px solid rgba(149,24,39,.14);
+}
+.panel-admin .page-heading {
+  color: #2a1014;
+  font-family: "Segoe UI", Aptos, Arial, sans-serif;
+  font-size: clamp(2rem, 3vw, 2.8rem);
+  font-weight: 900;
+  letter-spacing: 0;
+}
+.panel-admin .user-pill {
+  border-radius: 8px;
+  border-color: rgba(200,30,52,.24);
+  background: #fff;
+  box-shadow: 0 14px 28px rgba(70,8,18,.08);
+}
+
+/* Overrides de rol: director. Conserva sidebar vertical pero ajusta fondo. */
+.panel-director .sidebar {
+  background:
+    linear-gradient(180deg, rgba(11,31,47,.98), rgba(23,52,76,.96)),
+    linear-gradient(135deg, rgba(15,122,67,.24), transparent);
+}
+
+/* 4. Contenido principal comun del panel interno. */
+.content-panel { flex: 1; padding: 1.25rem; min-width: 0; }
+
+/* Cabecera de cada modulo interno: izquierda titulo, derecha usuario actual. */
+.topbar {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: center;
+  margin-bottom: 1.25rem;
+}
+.page-heading { font-family: Georgia, "Times New Roman", serif; font-size: clamp(2rem, 4vw, 3rem); letter-spacing: -.05em; }
+
+/* Tarjeta de usuario visible en la topbar. Admin tiene algunos overrides arriba. */
+.user-pill {
+  display: grid;
+  gap: .1rem;
+  min-width: 220px;
+  padding: .85rem 1rem;
+  border-radius: 18px;
+  background: rgba(255,255,255,.85);
+  border: 1px solid var(--line);
+  box-shadow: 0 14px 35px rgba(16,32,51,.08);
+}
+.user-pill span { font-weight: 800; }
+.user-pill small { color: var(--muted); }
+
+/* Superficies reutilizables:
+   - panel-card: secciones y listados.
+   - hero-panel: encabezados destacados de modulo.
+   - metric-card: indicadores numericos del dashboard. */
+.panel-card, .hero-panel, .metric-card {
+  border: 1px solid var(--line);
+  background: rgba(255,255,255,.92);
+  border-radius: 8px;
+  box-shadow: 0 18px 45px rgba(16,32,51,.08);
+}
+.panel-card { padding: 1.25rem; }
+
+/* Hero interno para dashboard/categorias: bloque ancho con fondo deportivo. */
+.hero-panel {
+  padding: 1.6rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background:
+    linear-gradient(135deg, rgba(16,42,67,.94), rgba(15,122,67,.86)),
+    repeating-linear-gradient(45deg, rgba(255,255,255,.08) 0 1px, transparent 1px 16px);
+  color: white;
+}
+
+/* Hero administrativo: mismo componente, tema rojo y mayor presencia visual. */
+.panel-admin .hero-panel {
+  min-height: 190px;
+  border: 0;
+  border-radius: 8px;
+  background:
+    linear-gradient(120deg, rgba(42,16,20,.98), rgba(149,24,39,.92) 58%, rgba(228,61,72,.86)),
+    repeating-linear-gradient(90deg, rgba(255,255,255,.08) 0 1px, transparent 1px 18px);
+  box-shadow: 0 24px 48px rgba(70,8,18,.22);
+}
+.panel-admin .hero-panel h2 {
+  font-family: "Segoe UI", Aptos, Arial, sans-serif;
+  font-weight: 900;
+  letter-spacing: 0;
+}
+
+/* Accesos rapidos en dashboard admin. */
+.panel-admin .role-action-grid {
+  grid-template-columns: 1.25fr 1fr 1fr;
+}
+.panel-admin .role-action-card {
+  min-height: 132px;
+  border-color: rgba(200,30,52,.18);
+  background:
+    linear-gradient(180deg, #fff, #fff8f8);
+  box-shadow: 0 16px 34px rgba(70,8,18,.08);
+}
+.panel-admin .role-action-card:first-child {
+  background:
+    linear-gradient(135deg, #c81e34, #5c1019);
+  color: #fff;
+}
+.panel-admin .role-action-card:first-child span,
+.panel-admin .role-action-card:first-child strong {
+  color: #fff;
+}
+.panel-admin .role-action-card strong {
+  color: #3b1118;
+}
+
+/* Metricas del dashboard admin: cinco columnas compactas en escritorio. */
+.panel-admin .metric-grid {
+  grid-template-columns: repeat(5, minmax(150px, 1fr));
+}
+.panel-admin .metric-card {
+  border-radius: 8px;
+  border-color: rgba(200,30,52,.16);
+  background: #fff;
+  box-shadow: 0 14px 32px rgba(70,8,18,.08);
+}
+.panel-admin .metric-card::after {
+  right: -28px;
+  top: -28px;
+  background: rgba(200,30,52,.12);
+}
+.panel-admin .metric-card strong {
+  color: #2a1014;
+  font-family: "Segoe UI", Aptos, Arial, sans-serif;
+  font-weight: 900;
+}
+
+/* Cards, tablas y botones cuando el panel esta en modo administrador. */
+.panel-admin .panel-card {
+  border-radius: 8px;
+  border-color: rgba(200,30,52,.16);
+  box-shadow: 0 16px 34px rgba(70,8,18,.08);
+}
+.panel-admin .data-table thead th {
+  background: #fff0f1;
+  color: #3b1118;
+}
+.panel-admin .btn-outline-primary {
+  color: #c81e34;
+  border-color: #c81e34;
+}
+.panel-admin .btn-outline-primary:hover {
+  color: #fff;
+  background: #c81e34;
+  border-color: #c81e34;
+}
+
+/* Hero del director: mantiene lenguaje visual deportivo. */
+.panel-director .hero-panel {
+  background:
+    linear-gradient(135deg, rgba(23,52,76,.96), rgba(15,122,67,.86)),
+    repeating-linear-gradient(45deg, rgba(255,255,255,.08) 0 1px, transparent 1px 16px);
+}
+.hero-panel h2 { font-family: Georgia, "Times New Roman", serif; letter-spacing: -.04em; }
+
+/* Grid de accesos rapidos del dashboard interno. */
+.role-action-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+/* Tarjetas clicables del dashboard: cada una es un enlace a un modulo. */
+.role-action-card {
+  display: grid;
+  gap: .45rem;
+  min-height: 112px;
+  padding: 1rem;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--ink);
+  box-shadow: 0 14px 32px rgba(16,32,51,.07);
+}
+.role-action-card:hover {
+  color: var(--ink);
+  transform: translateY(-2px);
+}
+.role-action-card span {
+  color: var(--muted);
+  font-size: .75rem;
+  font-weight: 900;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+}
+.role-action-card strong {
+  color: var(--navy);
+  font-size: 1.05rem;
+}
+.panel-director .role-action-card {
+  position: relative;
+  overflow: hidden;
+  min-height: 118px;
+  border: 1px solid transparent;
+  color: #fff;
+  isolation: isolate;
+}
+.panel-director .role-action-card::before,
+.panel-director .role-action-card::after {
+  content: "";
+  position: absolute;
+  pointer-events: none;
+}
+.panel-director .role-action-card::before {
+  inset: 0;
+  z-index: -1;
+  background:
+    linear-gradient(90deg, rgba(255,255,255,.2), transparent 44%),
+    radial-gradient(circle at 92% 12%, rgba(255,255,255,.24), transparent 7rem);
+}
+.panel-director .role-action-card::after {
+  right: -34px;
+  bottom: -34px;
+  width: 104px;
+  height: 104px;
+  border-radius: 50%;
+  background: rgba(255,255,255,.18);
+}
+.panel-director .role-action-card span,
+.panel-director .role-action-card strong {
+  position: relative;
+  z-index: 1;
+  color: #fff;
+}
+.panel-director .role-action-card span {
+  opacity: .86;
+}
+.panel-director .role-action-card strong {
+  max-width: 24rem;
+  font-size: 1.12rem;
+}
+.panel-director .role-action-card.action-tournament {
+  background: linear-gradient(135deg, #0f7a43, #17344c);
+  border-color: rgba(15,122,67,.28);
+  box-shadow: 0 16px 34px rgba(15,122,67,.18);
+}
+.panel-director .role-action-card.action-match-center {
+  background: linear-gradient(135deg, #1f5eff, #16355f);
+  border-color: rgba(31,94,255,.28);
+  box-shadow: 0 16px 34px rgba(31,94,255,.16);
+}
+.panel-director .role-action-card.action-schedule {
+  background: linear-gradient(135deg, #b07a18, #6f4a08);
+  border-color: rgba(176,122,24,.32);
+  box-shadow: 0 16px 34px rgba(176,122,24,.18);
+}
+.panel-director .role-action-card.action-tournament span::before {
+  content: "T";
+}
+.panel-director .role-action-card.action-match-center span::before {
+  content: "M";
+}
+.panel-director .role-action-card.action-schedule span::before {
+  content: "P";
+}
+.panel-director .role-action-card span::before {
+  display: inline-grid;
+  place-items: center;
+  width: 1.7rem;
+  height: 1.7rem;
+  margin-right: .55rem;
+  border-radius: 8px;
+  background: rgba(255,255,255,.2);
+  color: #fff;
+  font-size: .8rem;
+}
+.panel-director .role-action-card:hover {
+  color: #fff;
+  filter: brightness(1.04);
+}
+
+/* 5. Formularios plegables.
+   Lo usa templates/shared/collapsible_form.html para pantallas con varios
+   formularios y templates/shared/form_page.html para crear/editar entidades. */
+.form-disclosure {
+  /* Contenedor reusable para formularios largos dentro de pantallas densas. */
+  display: block;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(255,255,255,.96);
+  box-shadow: 0 14px 32px rgba(16,32,51,.07);
+  overflow: hidden;
+}
+
+/* Cabecera clicable del <details>: titulo del formulario y control Abrir/Cerrar. */
+.form-disclosure summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  min-height: 4.5rem;
+  padding: 1rem;
+  cursor: pointer;
+  list-style: none;
+}
+.form-disclosure summary::-webkit-details-marker { display: none; }
+
+/* Agrupa eyebrow y titulo dentro del summary. */
+.form-disclosure summary span {
+  display: grid;
+  gap: .25rem;
+}
+
+/* Texto pequeno "Formulario" o etiqueta equivalente. */
+.form-disclosure summary small {
+  color: var(--gold);
+  font-size: .68rem;
+  font-weight: 900;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+}
+.form-disclosure summary strong {
+  color: var(--navy);
+  font-size: 1.08rem;
+}
+
+/* Pastilla Abrir. Cuando el details esta abierto, CSS reemplaza el texto por
+   "Cerrar" sin cambiar el template. */
+.form-disclosure summary b {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 5.2rem;
+  min-height: 2.15rem;
+  padding: .35rem .75rem;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--navy);
+  background: #fff;
+  font-size: .82rem;
+}
+.form-disclosure[open] summary {
+  border-bottom: 1px solid var(--line);
+  background: rgba(16,42,67,.04);
+}
+.form-disclosure[open] summary b::before {
+  content: "Cerrar";
+  font-weight: 800;
+}
+.form-disclosure[open] summary b {
+  font-size: 0;
+}
+.form-disclosure form {
+  padding: 1rem;
+}
+
+/* Campo oculto dinamico. Sanciones lo usa para mostrar equipo/jugador u oficial
+   segun el radio seleccionado. */
+.form-field.is-hidden {
+  display: none;
+}
+
+/* Grupo especial del campo target_type de sanciones.
+   Django renderiza RadioSelect como div > div > label > input. Estas reglas
+   convierten ese HTML en tarjetas seleccionables y evitan que Bootstrap trate
+   el contenedor como un radio individual. */
+.form-field-target_type > label {
+  /* Grupo especial de radios de sanciones: no usa clases Bootstrap directas. */
+  display: block;
+  margin-bottom: .55rem;
+}
+.form-field-target_type > div:not(.form-text) {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: .75rem;
+  width: 100%;
+  height: auto;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+.form-field-target_type > div:not(.form-text) > div {
+  min-width: 0;
+  min-height: 3rem;
+  display: flex;
+  align-items: center;
+  padding: .65rem .75rem;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+}
+.form-field-target_type label {
+  display: flex;
+  align-items: center;
+  gap: .6rem;
+  width: 100%;
+  margin: 0;
+  cursor: pointer;
+  font-weight: 800;
+  line-height: 1.25;
+  color: var(--navy);
+}
+.form-field-target_type input[type="radio"] {
+  flex: 0 0 auto;
+  width: 1rem;
+  height: 1rem;
+  margin: 0;
+  accent-color: var(--grass);
+}
+.form-field-target_type .form-text {
+  margin-top: .5rem;
+  line-height: 1.4;
+}
+
+/* Variante para formularios individuales dentro de panel-card; evita sombra doble. */
+.single-form-disclosure {
+  box-shadow: none;
+}
+
+/* Apariencia de formularios bajo tema admin. */
+.panel-admin .form-disclosure {
+  border-color: rgba(200,30,52,.18);
+}
+.panel-admin .form-disclosure summary small {
+  color: #c81e34;
+}
+.panel-admin .form-disclosure[open] summary {
+  background: #fff3f4;
+}
+.panel-admin .form-disclosure summary b {
+  color: #c81e34;
+  border-color: rgba(200,30,52,.22);
+}
+
+/* 6. Componentes pequenos de contenido interno. */
+.section-title { font-family: Georgia, "Times New Roman", serif; font-size: 1.6rem; letter-spacing: -.035em; }
+.mini-title { font-weight: 900; font-size: 1rem; margin-bottom: 1rem; color: var(--navy); }
+
+/* Metricas numericas del dashboard. */
+.metric-grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 1rem; }
+.metric-card { padding: 1.15rem; position: relative; overflow: hidden; }
+.metric-card::after {
+  content: "";
+  position: absolute;
+  right: -32px;
+  top: -32px;
+  width: 92px;
+  height: 92px;
+  border-radius: 50%;
+  background: rgba(24,160,88,.16);
+}
+.metric-card span { display: block; color: var(--muted); font-weight: 700; }
+.metric-card strong { display: block; font-size: 2rem; font-family: Georgia, "Times New Roman", serif; }
+
+/* Boton principal del sistema. Se usa para acciones positivas: crear, guardar,
+   buscar o ejecutar una accion deportiva. */
+.btn-court {
+  --bs-btn-color: #fff;
+  --bs-btn-bg: var(--grass);
+  --bs-btn-border-color: var(--grass);
+  --bs-btn-hover-color: #fff;
+  --bs-btn-hover-bg: var(--grass-dark);
+  --bs-btn-hover-border-color: var(--grass-dark);
+  border-radius: 999px;
+  font-weight: 800;
+  padding-inline: 1.1rem;
+}
+.btn-outline-primary { border-radius: 999px; font-weight: 800; }
+
+/* Tabla generica de templates/shared/table.html. */
+.data-table-wrap { border-radius: 18px; border: 1px solid var(--line); overflow: hidden; }
+.data-table { margin: 0; font-size: .92rem; }
+.data-table thead th { background: #edf4f8; color: var(--navy); white-space: nowrap; }
+.data-table td { vertical-align: middle; }
+
+/* Badges de estado. El template los aplica cuando un nombre de columna parece
+   status/state/active/surface_matches. */
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  min-height: 1.7rem;
+  padding: .2rem .62rem;
+  border-radius: 999px;
+  font-size: .78rem;
+  font-weight: 900;
+}
+.status-good { background: rgba(24,160,88,.14); color: #096b3a; }
+.status-muted { background: rgba(107,122,144,.16); color: #405066; }
+.status-warn { background: rgba(214,165,51,.18); color: #7a5100; }
+.status-neutral { background: rgba(16,42,67,.12); color: var(--navy); }
+.invalid-note { color: #b42318; font-size: .85rem; margin-top: .25rem; }
+
+/* Utilidades de layout internas:
+   narrow-card limita formularios largos, compact-card iguala alturas, y las
+   grillas two/three/detail organizan pantallas con varios formularios o datos. */
+.narrow-card { max-width: 760px; }
+.compact-card { height: 100%; }
+.two-column { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; }
+.three-column, .quick-actions { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1rem; }
+.detail-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: .8rem; }
+.detail-item {
+  padding: .85rem;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: #fbfdff;
+}
+.detail-item span { display: block; color: var(--muted); font-size: .8rem; font-weight: 800; }
+.detail-item strong { word-break: break-word; }
+
+/* Nota informativa amarilla, usada para instrucciones antes de formularios. */
+.surface-note {
+  padding: .8rem 1rem;
+  border-radius: 16px;
+  color: #775000;
+  background: rgba(214,165,51,.16);
+  border: 1px solid rgba(214,165,51,.32);
+}
+
+.scoreboard-shell {
+  overflow: hidden;
+  border-radius: 8px;
+  background: #1d3739;
+  color: #eaf5df;
+  border: 1px solid rgba(255,255,255,.18);
+  box-shadow: 0 24px 60px rgba(0,0,0,.22);
+}
+.scoreboard-top {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 1rem;
+  padding: .9rem 1rem;
+  background: #29484a;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+}
+.scoreboard-top strong {
+  font-size: clamp(1.4rem, 3vw, 2.4rem);
+  color: #fff;
+}
+.scoreboard-top em {
+  justify-self: end;
+  color: #f1d26a;
+  font-style: normal;
+  font-weight: 900;
+}
+.scoreboard-grid {
+  display: grid;
+  grid-template-columns: minmax(120px, 1.15fr) minmax(180px, 1.6fr) minmax(90px, .6fr) minmax(90px, .6fr) minmax(100px, .7fr);
+  gap: .5rem;
+  padding: 1rem;
+}
+.scoreboard-label {
+  color: rgba(255,255,255,.72);
+  font-size: .72rem;
+  font-weight: 900;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+}
+.previous-sets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .35rem;
+}
+.previous-sets span,
+.score-number {
+  min-height: 3.2rem;
+  display: inline-grid;
+  place-items: center;
+  padding: .35rem .7rem;
+  border-radius: 6px;
+  background: #263638;
+  color: #dbe56a;
+  font-family: "Courier New", monospace;
+  font-size: clamp(1.7rem, 4vw, 3rem);
+  font-weight: 900;
+  line-height: 1;
+}
+.score-player {
+  min-height: 3.2rem;
+  display: flex;
+  align-items: center;
+  padding: .6rem .85rem;
+  border-radius: 6px;
+  background: #f0b82e;
+  color: #13202c;
+  font-weight: 900;
+  font-size: clamp(1.05rem, 2vw, 1.35rem);
+}
+.point-score {
+  color: #fff87a;
+  background: #173234;
+  border: 1px solid rgba(241,210,106,.25);
+}
+.point-controls {
+  display: grid;
+  gap: .7rem;
+}
+.btn-player-a,
+.btn-player-b {
+  min-height: 2.9rem;
+  border: 0;
+  color: #12212d;
+  font-weight: 900;
+  box-shadow: 0 12px 24px rgba(16,32,51,.12);
+}
+.btn-player-a { background: linear-gradient(135deg, #f4bf2f, #ffdc67); }
+.btn-player-b { background: linear-gradient(135deg, #5ec8ff, #b5ecff); }
+.btn-player-a:hover,
+.btn-player-b:hover {
+  color: #12212d;
+  filter: brightness(1.03);
+}
+.btn-player-a:disabled,
+.btn-player-b:disabled {
+  opacity: .48;
+  box-shadow: none;
+}
+
+.dashboard-bracket-filter {
+  min-width: min(420px, 100%);
+}
+.bracket-board {
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background:
+    linear-gradient(135deg, rgba(20,61,49,.96), rgba(22,53,95,.92)),
+    #143d31;
+  color: #fff;
+}
+.bracket-board-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 1.5rem;
+  align-items: center;
+  padding: 1.25rem 1.5rem;
+  border-bottom: 2px solid rgba(255,255,255,.14);
+  background: rgba(0,0,0,.2);
+}
+.bracket-board-head span {
+  display: block;
+  color: #f1d26a;
+  font-size: .7rem;
+  font-weight: 900;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+}
+.bracket-board-head strong {
+  font-size: 1.3rem;
+  letter-spacing: .02em;
+}
+.bracket-board-head em {
+  color: rgba(255,255,255,.82);
+  font-style: normal;
+  font-weight: 800;
+  font-size: .9rem;
+}
+.bracket-track {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 280px;
+  gap: 3.5rem;
+  overflow-x: auto;
+  padding: 2.5rem 2rem;
+  min-height: 650px;
+  align-items: center;
+}
+.bracket-round {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 2rem;
+  min-width: 280px;
+  padding: 1rem 0;
+}
+.bracket-round h3 {
+  margin: 0 0 1rem 0;
+  color: #f1d26a;
+  font-size: .75rem;
+  font-weight: 900;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  text-align: left;
+  padding: 0 .5rem;
+  border-bottom: 2px solid #f1d26a;
+  padding-bottom: .75rem;
+}
+.bracket-match {
+  position: relative;
+  display: grid;
+  gap: .4rem;
+  padding: 1.1rem;
+  border-radius: 6px;
+  background: linear-gradient(135deg, #c86a08, #803900);
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.2), 0 12px 24px rgba(0,0,0,.16);
+  min-height: 100px;
+  justify-content: center;
+  align-content: center;
+  transition: all .2s ease;
+}
+.bracket-match:hover {
+  transform: scale(1.05);
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.3), 0 16px 32px rgba(0,0,0,.24);
+}
+.bracket-match::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  right: -3.5rem;
+  width: 3rem;
+  height: 2px;
+  background: linear-gradient(90deg, rgba(255,255,255,.55), rgba(255,255,255,.2));
+  transform: translateY(-1px);
+}
+.bracket-round:last-child .bracket-match::after {
+  display: none;
+}
+.bracket-match span,
+.bracket-match small,
+.bracket-match strong {
+  color: #fff;
+  font-weight: 900;
+  text-align: center;
+  line-height: 1.4;
+  word-wrap: break-word;
+}
+.bracket-match span {
+  font-size: .95rem;
+}
+.bracket-match small {
+  color: rgba(255,255,255,.75);
+  font-size: .7rem;
+  font-weight: 700;
+  margin: 0;
+}
+.bracket-match strong {
+  margin-top: .6rem;
+  padding-top: .6rem;
+  border-top: 2px solid rgba(255,255,255,.3);
+  color: #fff87a;
+  font-size: .85rem;
+  display: block;
+}
+.bracket-match.is-decided {
+  background: linear-gradient(135deg, #0f7a43, #174e61);
+  border: 2px solid #4dd0a1;
+}
+.bracket-match.is-decided strong {
+  border-top: 2px solid #4dd0a1;
+  color: #4dd0a1;
+}
+.bracket-empty {
+  padding: 1.1rem;
+  border: 2px dashed rgba(255,255,255,.35);
+  border-radius: 6px;
+  color: rgba(255,255,255,.68);
+  background: rgba(255,255,255,.04);
+  font-weight: 700;
+  font-size: .85rem;
+  text-align: center;
+  min-height: 100px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Distribucion mejorada para rounds con pocos matches */
+.bracket-round {
+  min-height: 500px;
+}
+
+/* Grilla para formularios de filtro, por ejemplo auditoria. */
+.filter-grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 1rem; align-items: end; }
+
+/* 7. Login y verificacion 2FA. */
+.login-body {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  background:
+    radial-gradient(circle at 20% 10%, rgba(214,165,51,.28), transparent 22rem),
+    linear-gradient(135deg, var(--navy-2), #143d31);
+}
+.login-card {
+  width: min(460px, 100%);
+  padding: 2rem;
+  border-radius: 30px;
+  background: rgba(255,255,255,.96);
+  box-shadow: 0 28px 70px rgba(0,0,0,.28);
+}
+.login-brand { color: white; background: linear-gradient(135deg, var(--navy), var(--grass-dark)); }
+.login-card h1 { font-family: Georgia, "Times New Roman", serif; letter-spacing: -.04em; }
+.messages-wrap { margin-bottom: 1rem; }
+
+/* 8. Landing publica compartida.
+   Algunas reglas de la landing tambien estan en templates/core/landing.html
+   porque esa pantalla requiere composicion mas especifica. */
+.public-body {
+  /* Experiencia publica independiente del panel administrativo. */
+  min-height: 100vh;
+  background: #f6f8fb;
+}
+
+/* Barra superior publica: marca a la izquierda y acceso al login a la derecha. */
+.public-nav {
+  position: fixed;
+  z-index: 10;
+  top: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem clamp(1rem, 4vw, 4rem);
+  background: rgba(246,248,251,.92);
+  border-bottom: 1px solid rgba(219,227,239,.8);
+  backdrop-filter: blur(12px);
+}
+
+/* Marca publica. */
+.public-brand {
+  color: var(--navy);
+  line-height: 1;
+}
+.public-brand span {
+  display: block;
+  color: var(--grass-dark);
+  font-size: .75rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+.public-brand strong { font-size: 1.2rem; }
+
+/* Hero publico con fondo de cancha simulado por degradados y .court-lines. */
+.public-hero {
+  position: relative;
+  min-height: 78vh;
+  display: grid;
+  align-items: center;
+  padding: 7rem clamp(1rem, 6vw, 6rem) 4rem;
+  overflow: hidden;
+  background:
+    linear-gradient(rgba(11,27,43,.7), rgba(11,27,43,.58)),
+    linear-gradient(135deg, #145a3c, #17344c 62%, #b9892d);
+  color: white;
+}
+
+/* Lineas de cancha decorativas. No contienen informacion funcional. */
+.court-lines {
+  position: absolute;
+  inset: 16% 8% 8%;
+  border: 3px solid rgba(255,255,255,.45);
+  opacity: .8;
+}
+.court-lines::before,
+.court-lines::after {
+  content: "";
+  position: absolute;
+  background: rgba(255,255,255,.45);
+}
+.court-lines::before {
+  left: 50%;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+}
+.court-lines::after {
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: 3px;
+}
+
+/* Contenedor del texto principal dentro del hero publico. */
+.public-hero-content {
+  position: relative;
+  max-width: 760px;
+}
+.public-hero h1 {
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(2.6rem, 7vw, 5.8rem);
+  line-height: .96;
+  margin-bottom: 1rem;
+}
+.public-hero p {
+  max-width: 620px;
+  font-size: 1.12rem;
+  color: rgba(255,255,255,.88);
+}
+
+/* Contadores publicos del hero. */
+.public-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .8rem;
+  margin-top: 1.4rem;
+}
+.public-stats span {
+  display: inline-flex;
+  align-items: baseline;
+  gap: .4rem;
+  min-height: 2.6rem;
+  padding: .5rem .75rem;
+  border: 1px solid rgba(255,255,255,.3);
+  border-radius: 8px;
+  background: rgba(255,255,255,.12);
+}
+.public-stats strong { font-size: 1.4rem; }
+
+/* Secciones publicas: torneos y jugadores. */
+.public-section {
+  padding: 3rem clamp(1rem, 5vw, 5rem);
+}
+
+/* Encabezado de seccion publica. */
+.section-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: end;
+  margin-bottom: 1.4rem;
+}
+.section-head h2 {
+  margin: 0;
+  color: var(--navy);
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(1.8rem, 4vw, 3rem);
+}
+
+/* Grids publicos de tarjetas. */
+.public-grid,
+.player-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+/* Tarjetas publicas de torneo, jugador y detalle seleccionado. */
+.public-card,
+.player-tile,
+.public-player-detail {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+  padding: 1rem;
+  box-shadow: 0 12px 26px rgba(16,32,51,.06);
+}
+.public-card h3,
+.player-tile h3,
+.public-player-detail h3 {
+  margin: .8rem 0;
+  color: var(--navy);
+  font-size: 1.2rem;
+  font-weight: 900;
+}
+
+/* Detalles clave dentro de tarjetas de torneo. */
+.public-card dl {
+  display: grid;
+  gap: .45rem;
+  margin: 0 0 .8rem;
+}
+.public-card dl div {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+}
+.public-card dt,
+.public-card dd {
+  margin: 0;
+}
+.public-card dt {
+  color: var(--muted);
+  font-size: .82rem;
+}
+.public-card p,
+.player-tile p {
+  color: var(--muted);
+  margin-bottom: 0;
+}
+
+/* Buscador publico de jugadores. */
+.player-search {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: .75rem;
+  max-width: 760px;
+  margin-bottom: 1rem;
+}
+
+/* Ficha resumida cuando se selecciona un jugador. */
+.public-player-detail {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .75rem 1rem;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+.public-player-detail h3 {
+  flex-basis: 100%;
+  margin: 0;
+}
+.public-player-detail span,
+.player-tile span {
+  color: var(--muted);
+  font-size: .9rem;
+}
+
+/* Contenido interno de una tarjeta de jugador. */
+.player-tile div {
+  display: flex;
+  justify-content: space-between;
+  gap: .75rem;
+  margin: .85rem 0;
+}
+.player-tile a {
+  font-weight: 900;
+  color: var(--grass-dark);
+}
+.public-empty {
+  margin: 0;
+  color: var(--muted);
+}
+
+/* 9. Responsive tablet: reduce columnas antes de que formularios y tarjetas se
+   compriman demasiado. */
+@media (max-width: 1100px) {
+  .metric-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .role-action-grid { grid-template-columns: 1fr; }
+  .two-column { grid-template-columns: 1fr; }
+  .three-column, .quick-actions { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .detail-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .public-grid, .player-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .scoreboard-grid { grid-template-columns: minmax(90px, 1fr) minmax(160px, 1.3fr) minmax(72px, .6fr) minmax(72px, .6fr) minmax(80px, .7fr); }
+}
+
+/* 10. Responsive movil: apila sidebar, topbar, grillas y formularios. */
+@media (max-width: 780px) {
+  .app-shell { display: block; }
+  .sidebar { position: static; width: 100%; height: auto; }
+  .panel-admin .sidebar { position: static; grid-template-columns: 1fr; }
+  .panel-admin .sidebar-nav { overflow-x: auto; }
+  .content-panel { padding: 1rem; }
+  .panel-admin .content-panel { padding: 1rem; }
+  .topbar { display: block; }
+  .user-pill { margin-top: 1rem; min-width: 0; }
+  .metric-grid, .two-column, .three-column, .quick-actions, .detail-grid, .filter-grid { grid-template-columns: 1fr; }
+  .form-field-target_type > div:not(.form-text) { grid-template-columns: 1fr; }
+  .public-nav { position: static; }
+  .scoreboard-top { grid-template-columns: 1fr; text-align: center; }
+  .scoreboard-top em { justify-self: center; }
+  .scoreboard-grid { grid-template-columns: 1fr 1.4fr .7fr .7fr .8fr; overflow-x: auto; }
+  .public-hero { min-height: 70vh; padding-top: 4rem; }
+  .section-head { display: block; }
+  .public-grid, .player-grid, .player-search { grid-template-columns: 1fr; }
+}

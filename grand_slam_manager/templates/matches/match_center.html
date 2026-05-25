@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% load grand_slam_extras %}
+{% block page_heading %}Match Center{% endblock %}
+{% block content %}
+  <section class="hero-panel mb-4">
+    <div>
+      <p class="eyebrow mb-1">Partido</p>
+      <h2>Match Center #{{ match_id }}</h2>
+      <p class="mb-0">Datos generales, marcador, programación, oficiales y sanciones relacionadas.</p>
+    </div>
+    <div class="d-flex gap-2 flex-wrap">
+      <a class="btn btn-light" href="{% url 'match_play' match_id %}">Abrir desarrollo</a>
+      <a class="btn btn-outline-light" href="{% url 'match_list' %}">Volver</a>
+    </div>
+  </section>
+
+  {% if center.match %}
+    <section class="panel-card mb-4">
+            <h2 class="section-title">Datos generales</h2>
+      <div class="detail-grid">
+        {% for key in match_columns %}
+          {% with value=center.match|get_item:key %}
+          <div class="detail-item"><span>{{ key|humanize_key }}</span><strong>{% render_cell value key can_view_sensitive %}</strong></div>
+          {% endwith %}
+        {% endfor %}
+      </div>
+    </section>
+  {% endif %}
+
+  {% if can_write %}
+    <section class="quick-actions mb-4">
+      {% url 'match_add_participant' match_id as match_add_participant_url %}
+      {% url 'match_register_set' match_id as match_register_set_url %}
+      {% url 'match_schedule' match_id as match_schedule_url %}
+      {% url 'match_reschedule' match_id as match_reschedule_url %}
+      {% url 'match_finish' match_id as match_finish_url %}
+      {% include "shared/collapsible_form.html" with eyebrow="Accion" title="Participante" form=participant_form action=match_add_participant_url submit_label="Agregar" %}
+      {% include "shared/collapsible_form.html" with eyebrow="Accion" title="Registrar set" form=set_form action=match_register_set_url submit_label="Registrar" %}
+      {% include "shared/collapsible_form.html" with eyebrow="Accion" title="Programar" form=schedule_form action=match_schedule_url submit_label="Programar" %}
+      {% include "shared/collapsible_form.html" with eyebrow="Accion" title="Reprogramar" form=reschedule_form action=match_reschedule_url submit_label="Reprogramar" %}
+      {% include "shared/collapsible_form.html" with eyebrow="Accion" title="Finalizar" form=finish_form action=match_finish_url submit_label="Finalizar" %}
+      <article class="panel-card compact-card"><h3 class="mini-title">Sanción</h3><p class="text-muted">Registra sanciones relacionadas al partido.</p><a class="btn btn-outline-primary w-100" href="{% url 'sanction_list' %}?match_id={{ match_id }}">Ir a sanciones</a></article>
+      <article class="panel-card compact-card"><h3 class="mini-title">Lesión</h3><p class="text-muted">Registra una novedad médica del partido.</p><a class="btn btn-outline-primary w-100" href="{% url 'injury_register' %}">Registrar lesión</a></article>
+    </section>
+  {% endif %}
+
+  {% for section in center.sections %}
+    <section class="panel-card mb-4">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2 class="section-title mb-0">{{ section.title }}</h2>
+        <span class="status-pill status-neutral">{{ section.table|default:"sin tabla" }}</span>
+      </div>
+      {% include "shared/table.html" with rows=section.rows columns=section.columns empty_message="Sin datos para esta seccion." %}
+    </section>
+  {% endfor %}
+{% endblock %}
+

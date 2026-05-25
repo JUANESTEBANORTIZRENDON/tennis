@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{# Template generico de listados. La vista entrega rows/columns desde servicios + display_columns. #}
+{% block page_heading %}{{ title }}{% endblock %}
+{% block content %}
+  <section class="panel-card">
+        <div class="d-flex flex-wrap justify-content-between gap-3 align-items-start mb-3">
+      <div>
+        <p class="eyebrow mb-1">Modulo</p>
+        <h2 class="section-title mb-1">{{ title }}</h2>
+        {% if subtitle %}<p class="text-muted mb-0">{{ subtitle }}</p>{% endif %}
+      </div>
+      <div class="d-flex gap-2">
+        {% if can_write and primary_action_url %}<a class="btn btn-court" href="{{ primary_action_url }}">{{ primary_action_label|default:"Crear" }}</a>{% endif %}
+        {% if can_write and secondary_action_url %}<a class="btn btn-outline-secondary" href="{{ secondary_action_url }}">{{ secondary_action_label }}</a>{% endif %}
+      </div>
+    </div>
+        {% include "shared/table.html" with rows=rows columns=columns empty_message=empty_message %}
+  </section>
+{% endblock %}
