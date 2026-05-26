@@ -38,10 +38,74 @@ def create_match(data: dict) -> None:
     call_stored_procedure("sp_create_match", data)
 
 
-def generate_first_round_matches(tournament_id: int, category_id: int | None = None, mode: str = "ordered") -> None:
+def generate_first_round_matches(tournament_id: int, category_id: int | None = None, subcategory_id: int | None = None, mode: str = "ordered") -> None:
     """Genera partidos de primera ronda dentro de procedimientos almacenados."""
 
-    call_stored_procedure("sp_generate_first_round_matches", {"tournament_id": tournament_id, "category_id": category_id, "mode": mode})
+    call_stored_procedure(
+        "sp_generate_first_round_matches",
+        {"tournament_id": tournament_id, "category_id": category_id, "subcategory_id": subcategory_id, "mode": mode},
+    )
+
+
+def first_round_pairing_board(tournament_id: int | None, category_id: int | None = None, subcategory_id: int | None = None) -> list[dict]:
+    """Agrupa inscripciones y partidos existentes para armar la primera ronda visual."""
+
+    if not tournament_id:
+        return []
+    entries = [
+        row
+        for row in fetch_stored_function_rows("sp_first_round_entries_json", [tournament_id, category_id, subcategory_id])
+        if isinstance(row, dict)
+    ]
+    matches = [
+        row
+        for row in fetch_stored_function_rows("sp_first_round_matches_json", [tournament_id, category_id, subcategory_id])
+        if isinstance(row, dict)
+    ]
+    groups: dict[str, dict] = {}
+    for row in entries:
+        key = str(get_value(row, "subcategory_id"))
+        groups.setdefault(
+            key,
+            {
+                "subcategory_id": get_value(row, "subcategory_id"),
+                "categoria": get_value(row, "categoria"),
+                "cuadro": get_value(row, "cuadro"),
+                "draw_size": int(get_value(row, "draw_size", default=0) or 0),
+                "entries": [],
+                "matches": [],
+            },
+        )
+        groups[key]["entries"].append(row)
+    for row in matches:
+        key = str(get_value(row, "subcategory_id"))
+        groups.setdefault(
+            key,
+            {
+                "subcategory_id": get_value(row, "subcategory_id"),
+                "categoria": get_value(row, "categoria"),
+                "cuadro": get_value(row, "cuadro"),
+                "draw_size": int(get_value(row, "draw_size", default=0) or 0),
+                "entries": [],
+                "matches": [],
+            },
+        )
+        groups[key]["matches"].append(row)
+    board = []
+    for group in groups.values():
+        choices = [row for row in group["entries"] if not get_value(row, "paired")]
+        total_pairs = max(0, int(len(group["entries"]) / 2))
+        open_slots = list(range(max(0, total_pairs - len(group["matches"]))))
+        group["choices"] = choices
+        group["open_slots"] = open_slots
+        board.append(group)
+    return sorted(board, key=lambda item: (str(item.get("categoria") or ""), str(item.get("cuadro") or "")))
+
+
+def create_first_round_pairing(data: dict) -> None:
+    """Crea una pareja manual de primera ronda para el cuadro seleccionado."""
+
+    call_stored_procedure("sp_create_first_round_pairing", data)
 
 
 def start_match(match_id: int) -> None:

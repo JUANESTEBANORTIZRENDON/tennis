@@ -5,9 +5,9 @@
     <div>
       <p class="eyebrow mb-1">Configuracion de partidos</p>
       <h2>Match Center</h2>
-      <p class="mb-0">Filtra por torneo, categoría y ronda antes de crear o revisar partidos.</p>
+      <p class="mb-0">Filtra por torneo, categoria y cuadro para revisar partidos y preparar la primera ronda.</p>
     </div>
-    {% if can_write and primary_action_url %}<a class="btn btn-light" href="{{ primary_action_url }}">Crear partido</a>{% endif %}
+    {% if can_write and primary_action_url %}<a class="btn btn-light" href="{{ primary_action_url }}">Seleccionar parejas</a>{% endif %}
   </section>
 
   <section class="panel-card mb-4">
@@ -21,7 +21,7 @@
         </select>
       </div>
       <div class="col-12 col-md-4">
-        <label class="form-label" for="match-category">Categoría</label>
+        <label class="form-label" for="match-category">Categoria</label>
         <select id="match-category" name="category_id" class="form-select" onchange="this.form.submit()">
           {% for category in category_options %}
             <option value="{{ category.id }}" {% if category.selected %}selected{% endif %}>{{ category.label }}</option>
@@ -29,10 +29,10 @@
         </select>
       </div>
       <div class="col-12 col-md-4">
-        <label class="form-label" for="match-round">Ronda</label>
-        <select id="match-round" name="round_id" class="form-select" onchange="this.form.submit()">
-          {% for round in round_options %}
-            <option value="{{ round.id }}" {% if round.selected %}selected{% endif %}>{{ round.label }}</option>
+        <label class="form-label" for="match-subcategory">Cuadro</label>
+        <select id="match-subcategory" name="subcategory_id" class="form-select" onchange="this.form.submit()">
+          {% for subcategory in subcategory_options %}
+            <option value="{{ subcategory.id }}" {% if subcategory.selected %}selected{% endif %}>{{ subcategory.label }}</option>
           {% endfor %}
         </select>
       </div>
@@ -56,8 +56,9 @@
           </form>
           <form method="post" action="{{ pairing_ordered_url }}">
             {% csrf_token %}
-            <button class="btn btn-court" type="submit">Por siembra/ranking</button>
+            <button class="btn btn-court" type="submit">Por siembra</button>
           </form>
+          <a class="btn btn-light" href="{{ primary_action_url }}">Seleccion manual</a>
         </div>
       </div>
     </section>

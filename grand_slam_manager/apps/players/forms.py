@@ -137,8 +137,6 @@ class EntryForm(BootstrapFormMixin, forms.Form):
 
     subcategory_id = forms.TypedChoiceField(label="Cuadro", coerce=int)
     team_id = forms.TypedChoiceField(label="Equipo", coerce=int)
-    seed = forms.IntegerField(label="Siembra", min_value=1, required=False)
-    ranking_at_entry = forms.IntegerField(label="Ranking al inscribir", required=False)
     qualifying_method = forms.ChoiceField(label="Método clasificación", choices=QUALIFYING_METHOD_CHOICES, initial="Direct")
 
     def __init__(self, *args, subcategory_choices=None, team_choices=None, fixed_subcategory_id=None, **kwargs):
@@ -158,7 +156,6 @@ class EntryPlayerForm(BootstrapFormMixin, forms.Form):
     subcategory_id = forms.TypedChoiceField(label="Cuadro", coerce=int)
     team_id = forms.TypedChoiceField(label="Equipo inscrito", coerce=int)
     player_id = forms.ChoiceField(label="Jugador")
-    start_date = forms.DateField(label="Fecha inicio", widget=forms.DateInput(attrs={"type": "date"}))
 
     def __init__(
         self,

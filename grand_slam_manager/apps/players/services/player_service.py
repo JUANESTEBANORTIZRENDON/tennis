@@ -170,13 +170,13 @@ def available_coach_player_choices(coach_id: int | None) -> list[tuple[str, str]
 def create_entry(data: dict) -> None:
     """Inscribe un equipo en un cuadro."""
 
-    call_stored_procedure("sp_create_entry", data, aliases={"seed": ["seed"]})
+    call_stored_procedure("sp_create_entry", data)
 
 
 def add_entry_team_player(data: dict) -> None:
     """Agrega jugador a un equipo que ya esta inscrito en el cuadro indicado."""
 
-    call_stored_procedure("sp_add_entry_team_player", {"role": "Player", **data})
+    call_stored_procedure("sp_add_entry_team_player", data)
 
 
 def entered_team_choices(tournament_id: int | None, category_id: int | None, subcategory_id: int | None) -> list[tuple[int | str, str]]:
@@ -215,6 +215,8 @@ def available_entry_team_choices(subcategory_id: int | None) -> list[tuple[int |
     """Equipos disponibles para inscribir en el cuadro seleccionado."""
 
     choices: list[tuple[int | str, str]] = [("", "Seleccione un equipo")]
+    if not subcategory_id:
+        return [("", "Seleccione primero un cuadro")]
     rows = fetch_stored_function_rows("sp_available_entry_teams_json", [subcategory_id])
     for row in rows:
         if not isinstance(row, dict):

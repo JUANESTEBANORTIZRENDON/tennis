@@ -46,11 +46,16 @@ def _filter_url(base_name: str, **params) -> str:
 def _structure_context(request) -> dict:
     selected_tournament_id = _selected_int(request, "tournament_id")
     selected_category_id = _selected_int(request, "category_id")
-    selected_round_id = _selected_int(request, "round_id")
+    selected_subcategory_id = _selected_int(request, "subcategory_id")
     tree = tournament_service.category_tree_for_tournament(selected_tournament_id)
     selected_tournament_id = tree.get("selected_tournament_id")
     categories = tree["categories"]
     rounds = [row for row in tree["rounds"] if not selected_category_id or str(get_value(row, "category_id")) == str(selected_category_id)]
+    subcategories = [
+        row
+        for row in tree["subcategories"]
+        if not selected_category_id or str(get_value(row, "category_id")) == str(selected_category_id)
+    ]
     courts = [
         row
         for row in tournament_service.list_courts()
@@ -73,22 +78,22 @@ def _structure_context(request) -> dict:
         }
         for row in categories
     ]
-    round_options = [{"id": "", "label": "Todas las rondas", "selected": selected_round_id is None}]
-    round_options += [
+    subcategory_options = [{"id": "", "label": "Todos los cuadros", "selected": selected_subcategory_id is None}]
+    subcategory_options += [
         {
-            "id": get_value(row, "id", "round_id"),
-            "label": " - ".join(str(part) for part in [get_value(row, "cuadro"), get_value(row, "round_name")] if part),
-            "selected": str(get_value(row, "id", "round_id")) == str(selected_round_id),
+            "id": get_value(row, "id", "subcategory_id"),
+            "label": " - ".join(str(part) for part in [get_value(row, "categoria"), get_value(row, "name", "cuadro")] if part),
+            "selected": str(get_value(row, "id", "subcategory_id")) == str(selected_subcategory_id),
         }
-        for row in rounds
+        for row in subcategories
     ]
     return {
         "selected_tournament_id": selected_tournament_id,
         "selected_category_id": selected_category_id,
-        "selected_round_id": selected_round_id,
+        "selected_subcategory_id": selected_subcategory_id,
         "tournament_options": tournament_options,
         "category_options": category_options,
-        "round_options": round_options,
+        "subcategory_options": subcategory_options,
         "round_choices": tournament_service.choice_rows(rounds, label_keys=("cuadro", "round_name")),
         "court_choices": tournament_service.choice_rows(courts, label_keys=("name", "surface")),
     }
@@ -99,7 +104,7 @@ def match_list_view(request):
     """Lista partidos y enlaza cada fila con su match center."""
 
     structure = _structure_context(request)
-    rows = match_service.list_matches(structure["selected_tournament_id"], structure["selected_category_id"], structure["selected_round_id"])
+    rows = match_service.list_matches(structure["selected_tournament_id"], structure["selected_category_id"], None)
     columns = display_columns(rows, "Match")
     for row in rows:
         pk = row_identifier(row, "match_id")
@@ -116,21 +121,23 @@ def match_list_view(request):
             "rows": rows,
             "columns": columns,
             "primary_action_url": _filter_url(
-                "match_create",
+                "match_first_round_pairing",
                 tournament_id=structure["selected_tournament_id"],
                 category_id=structure["selected_category_id"],
-                round_id=structure["selected_round_id"],
+                subcategory_id=structure["selected_subcategory_id"],
             ),
             "pairing_random_url": _filter_url(
                 "match_generate_first_round",
                 tournament_id=structure["selected_tournament_id"],
                 category_id=structure["selected_category_id"],
+                subcategory_id=structure["selected_subcategory_id"],
                 mode="random",
             ),
             "pairing_ordered_url": _filter_url(
                 "match_generate_first_round",
                 tournament_id=structure["selected_tournament_id"],
                 category_id=structure["selected_category_id"],
+                subcategory_id=structure["selected_subcategory_id"],
                 mode="ordered",
             ),
             "empty_message": "No hay partidos registrados.",
@@ -145,10 +152,11 @@ def match_generate_first_round_view(request):
 
     tournament_id = _selected_int(request, "tournament_id")
     category_id = _selected_int(request, "category_id")
+    subcategory_id = _selected_int(request, "subcategory_id")
     mode = request.GET.get("mode") or request.POST.get("mode") or "ordered"
     if request.method == "POST" and tournament_id:
         try:
-            match_service.generate_first_round_matches(tournament_id, category_id, mode)
+            match_service.generate_first_round_matches(tournament_id, category_id, subcategory_id, mode)
         except Exception as exc:
             message = str(exc)
             if "draw_not_full" in message:
@@ -167,6 +175,80 @@ def match_generate_first_round_view(request):
             "match_list",
             tournament_id=tournament_id,
             category_id=category_id,
+            subcategory_id=subcategory_id,
+        )
+    )
+
+
+@director_required
+def match_first_round_pairing_view(request):
+    """Interfaz visual para construir parejas manuales de primera ronda."""
+
+    structure = _structure_context(request)
+    board = match_service.first_round_pairing_board(
+        structure["selected_tournament_id"],
+        structure["selected_category_id"],
+        structure["selected_subcategory_id"],
+    )
+    for group in board:
+        group["create_url"] = _filter_url(
+            "match_first_round_pairing_create",
+            tournament_id=structure["selected_tournament_id"],
+            category_id=structure["selected_category_id"],
+            subcategory_id=group.get("subcategory_id"),
+        )
+    return render(
+        request,
+        "matches/first_round_pairings.html",
+        {
+            "title": "Primera ronda",
+            "board": board,
+            "back_url": _filter_url(
+                "match_list",
+                tournament_id=structure["selected_tournament_id"],
+                category_id=structure["selected_category_id"],
+                subcategory_id=structure["selected_subcategory_id"],
+            ),
+            **structure,
+        },
+    )
+
+
+@director_required
+def match_first_round_pairing_create_view(request):
+    """Guarda una pareja manual de primera ronda desde la vista visual."""
+
+    tournament_id = _selected_int(request, "tournament_id")
+    category_id = _selected_int(request, "category_id")
+    subcategory_id = _selected_int(request, "subcategory_id")
+    if request.method == "POST":
+        try:
+            match_service.create_first_round_pairing(
+                {
+                    "subcategory_id": _selected_int(request, "pair_subcategory_id") or subcategory_id,
+                    "team_a_id": _selected_int(request, "team_a_id"),
+                    "team_b_id": _selected_int(request, "team_b_id"),
+                }
+            )
+        except Exception as exc:
+            message = str(exc)
+            if "team_already_paired" in message:
+                report_safe_error(request, exc, "Ese equipo ya esta emparejado en la primera ronda.")
+            elif "same_team_pairing" in message:
+                report_safe_error(request, exc, "Selecciona dos equipos diferentes.")
+            elif "team_not_entered" in message:
+                report_safe_error(request, exc, "Solo puedes emparejar equipos inscritos en ese cuadro.")
+            else:
+                report_safe_error(request, exc, safe_operation_message("crear el emparejamiento"))
+        else:
+            log_action_safe(request, entity_name="Match", action="manual_first_round_pairing")
+            messages.success(request, "Emparejamiento de primera ronda creado.")
+    return redirect(
+        _filter_url(
+            "match_first_round_pairing",
+            tournament_id=tournament_id,
+            category_id=category_id,
+            subcategory_id=subcategory_id,
         )
     )
 
@@ -180,7 +262,6 @@ def match_create_view(request):
         request.POST or None,
         round_choices=structure["round_choices"],
         court_choices=structure["court_choices"],
-        initial={"round_id": structure["selected_round_id"]} if structure["selected_round_id"] else None,
     )
     if request.method == "POST" and form.is_valid():
         try:
@@ -190,14 +271,13 @@ def match_create_view(request):
         else:
             log_action_safe(request, entity_name="Match", action="create", new_value=form.cleaned_data)
             messages.success(request, "Partido creado usando sp_create_match.")
-            return redirect(
-                _filter_url(
-                    "match_list",
-                    tournament_id=structure["selected_tournament_id"],
-                    category_id=structure["selected_category_id"],
-                    round_id=form.cleaned_data.get("round_id"),
-                )
+        return redirect(
+            _filter_url(
+                "match_list",
+                tournament_id=structure["selected_tournament_id"],
+                category_id=structure["selected_category_id"],
             )
+        )
     return render(request, "shared/form_page.html", {"title": "Crear partido", "form": form, "back_url": reverse("match_list")})
 
 

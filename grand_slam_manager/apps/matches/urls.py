@@ -11,6 +11,8 @@ from apps.matches import views
 urlpatterns = [
     path("matches/", views.match_list_view, name="match_list"),
     path("matches/create/", views.match_create_view, name="match_create"),
+    path("matches/first-round/", views.match_first_round_pairing_view, name="match_first_round_pairing"),
+    path("matches/first-round/create/", views.match_first_round_pairing_create_view, name="match_first_round_pairing_create"),
     path("matches/generate-first-round/", views.match_generate_first_round_view, name="match_generate_first_round"),
     path("matches/development/", views.match_development_list_view, name="match_development_list"),
     path("matches/<int:match_id>/center/", views.match_center_view, name="match_center"),

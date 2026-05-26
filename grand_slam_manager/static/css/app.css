@@ -765,37 +765,150 @@ a { text-decoration: none; }
 }
 .data-table-wrap { border-radius: 18px; border: 1px solid var(--line); overflow: hidden; }
 .data-table { margin: 0; font-size: .92rem; }
-.data-table thead th { background: #edf4f8; color: var(--navy); white-space: nowrap; }
+.data-table thead th {
+  background: linear-gradient(180deg, #f9fbfd, #e8f0f5);
+  color: var(--navy);
+  white-space: nowrap;
+  border-bottom: 1px solid rgba(176,122,24,.22);
+}
 .data-table td { vertical-align: middle; }
 .table-sort-button {
   display: inline-flex;
   align-items: center;
   gap: .35rem;
-  width: auto;
-  min-height: 1.8rem;
-  padding: .2rem .5rem;
-  border: 1px solid rgba(16,42,67,.12);
-  border-radius: 6px;
-  background: linear-gradient(180deg, #fff, #f2efe7);
+  width: 100%;
+  min-height: 2rem;
+  padding: .24rem .65rem;
+  border: 1px solid rgba(176,122,24,.18);
+  border-radius: 999px;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.96), rgba(247,242,231,.9)),
+    radial-gradient(circle at top right, rgba(214,165,51,.16), transparent 4rem);
   color: var(--navy);
   font: inherit;
   font-weight: 900;
   text-align: left;
+  justify-content: space-between;
   cursor: pointer;
-  box-shadow: inset 0 1px 0 rgba(255,255,255,.9);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.95), 0 5px 12px rgba(16,42,67,.05);
+  transition: transform .18s ease, box-shadow .18s ease, background .18s ease;
 }
 .table-sort-button:hover,
 .table-sort-button.is-active {
   color: #fff;
   border-color: rgba(176,122,24,.44);
-  background: linear-gradient(135deg, #b8871f, #17344c);
-  box-shadow: 0 8px 18px rgba(23,52,76,.16);
+  background: linear-gradient(135deg, #17344c, #b8871f);
+  box-shadow: 0 10px 22px rgba(23,52,76,.18);
+  transform: translateY(-1px);
 }
 .sort-indicator {
   color: currentColor;
   font-size: .68rem;
   font-weight: 900;
   text-transform: uppercase;
+}
+.luxury-chip {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.2rem;
+  padding: .35rem .8rem;
+  border: 1px solid rgba(176,122,24,.28);
+  border-radius: 999px;
+  background: linear-gradient(180deg, #fff, #f8f0df);
+  color: var(--navy);
+  font-size: .78rem;
+  font-weight: 900;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.95);
+}
+.first-round-board__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+.pairing-lane {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 1rem;
+}
+.pairing-card {
+  position: relative;
+  display: grid;
+  gap: .85rem;
+  min-height: 240px;
+  padding: 1rem;
+  border: 1px solid rgba(176,122,24,.24);
+  border-radius: 8px;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.98), rgba(248,251,252,.94)),
+    radial-gradient(circle at top right, rgba(184,135,31,.14), transparent 8rem);
+  box-shadow: 0 18px 40px rgba(16,42,67,.08), inset 0 1px 0 rgba(255,255,255,.92);
+}
+.pairing-card::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 4px;
+  border-radius: 8px 0 0 8px;
+  background: linear-gradient(180deg, #b8871f, #17344c);
+}
+.pairing-card.is-locked {
+  background: linear-gradient(135deg, #17344c, #234f68);
+  color: #fff;
+}
+.pairing-card__top {
+  display: flex;
+  justify-content: space-between;
+  gap: .75rem;
+  color: inherit;
+  font-size: .76rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  opacity: .78;
+}
+.pairing-side,
+.pairing-select {
+  display: grid;
+  grid-template-columns: 2rem minmax(0, 1fr);
+  align-items: center;
+  gap: .7rem;
+  margin: 0;
+}
+.pairing-side strong,
+.pairing-select span {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #b8871f, #6d4a09);
+  color: #fff;
+  font-weight: 900;
+}
+.pairing-side span {
+  min-height: 2.6rem;
+  padding: .55rem .75rem;
+  border: 1px solid rgba(255,255,255,.18);
+  border-radius: 8px;
+  background: rgba(255,255,255,.12);
+  font-weight: 900;
+}
+.pairing-card__form {
+  display: grid;
+  gap: .8rem;
+}
+.pairing-winner,
+.empty-bracket-note {
+  margin: 0;
+  padding: .75rem .9rem;
+  border: 1px solid rgba(176,122,24,.24);
+  border-radius: 8px;
+  background: rgba(255,255,255,.72);
+  color: var(--navy);
+  font-weight: 900;
 }
 .form-field {
   animation: formFieldArrive .22s ease both;
