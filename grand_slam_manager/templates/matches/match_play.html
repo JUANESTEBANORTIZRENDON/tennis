@@ -92,24 +92,6 @@
 
   <section class="panel-card">
     <h2 class="section-title">Sets registrados</h2>
-    <div class="table-responsive data-table-wrap">
-      <table class="table table-hover align-middle data-table">
-        <thead><tr><th>Set</th><th>Games A</th><th>Games B</th><th>Tiebreak A</th><th>Tiebreak B</th><th>Ganador</th></tr></thead>
-        <tbody>
-          {% for set in detail.sets %}
-            <tr>
-              <td>{{ set.set_number }}</td>
-              <td>{{ set.team_a_games }}</td>
-              <td>{{ set.team_b_games }}</td>
-              <td>{{ set.tie_break_a|default:"-" }}</td>
-              <td>{{ set.tie_break_b|default:"-" }}</td>
-              <td>{{ set.winner_team_id }}</td>
-            </tr>
-          {% empty %}
-            <tr><td colspan="6" class="text-center text-muted py-4">Aun no hay sets registrados.</td></tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </div>
+    {% include "shared/table.html" with rows=detail.sets columns=set_columns empty_message="Aun no hay sets registrados." %}
   </section>
 {% endblock %}

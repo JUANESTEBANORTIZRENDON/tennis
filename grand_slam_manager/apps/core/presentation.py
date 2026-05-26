@@ -32,6 +32,7 @@ DEFAULT_HIDDEN_COLUMNS = {
 PREFERRED_COLUMNS = {
     "AuditLog": ["created_at", "action", "entity_table", "entity_pk", "user_id", "ip_address"],
     "Category": ["name", "gender", "mode", "torneo", "description"],
+    "Coach": ["coach_id", "entrenador", "usuario", "rol_usuario", "equipo", "jugadores_asignados", "jugadores", "license_number", "nationality"],
     "Court": ["name", "tournament_surface", "surface", "surface_matches", "capacity", "indoor", "location"],
     "Entry": ["torneo", "category_id", "categoria", "subcategory_id", "cuadro", "team_id", "equipo", "seed", "ranking_at_entry", "draw_size", "available_slots"],
     "InfractionType": ["code", "name", "category", "default_sanction_type", "description"],

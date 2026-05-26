@@ -1,4 +1,4 @@
-<details class="form-disclosure compact-card" {% if form.errors %}open{% endif %}>
+<details class="form-disclosure compact-card" data-disclosure-key="{{ title|slugify }}" {% if form.errors or force_open %}open{% endif %}>
   <summary>
     <span>
       <small>{{ eyebrow|default:"Formulario" }}</small>
@@ -12,3 +12,15 @@
     <button class="btn btn-court w-100" type="submit">{{ submit_label|default:"Guardar" }}</button>
   </form>
 </details>
+<script>
+  (() => {
+    document.querySelectorAll("[data-disclosure-key]").forEach((details) => {
+      if (details.dataset.disclosureReady === "true") return;
+      details.dataset.disclosureReady = "true";
+      const key = `grand-slam-form-open:${location.pathname}:${details.dataset.disclosureKey}`;
+      const stored = sessionStorage.getItem(key);
+      if (stored === "1") details.open = true;
+      details.addEventListener("toggle", () => sessionStorage.setItem(key, details.open ? "1" : "0"));
+    });
+  })();
+</script>

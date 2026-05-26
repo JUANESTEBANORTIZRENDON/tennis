@@ -135,3 +135,15 @@ def tournament_bracket(tournament_id: int | None) -> dict:
 
     value = fetch_stored_function_value("sp_tournament_bracket_json", [tournament_id])
     return value if isinstance(value, dict) else {"tournament": {}, "brackets": []}
+
+
+def tournament_detail(tournament_id: int) -> dict:
+    """Datos de torneo con categorias, cuadros y rondas relacionadas."""
+
+    tree = category_tree_for_tournament(tournament_id)
+    return {
+        "tournament": get_tournament(tournament_id),
+        "categories": tree["categories"],
+        "subcategories": tree["subcategories"],
+        "rounds": tree["rounds"],
+    }

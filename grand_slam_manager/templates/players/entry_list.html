@@ -34,8 +34,26 @@
   </section>
 
   {% if can_write %}
-    <section class="narrow-card mb-4">
+    <section class="two-column mb-4">
       {% include "shared/collapsible_form.html" with title="Inscribir equipo en cuadro" form=entry_form action=entry_create_url submit_label="Inscribir" %}
+      <div>
+        <section class="panel-card mb-3">
+          <form method="get" action="{% url 'entry_list' %}" class="row g-3 align-items-end">
+            <input type="hidden" name="tournament_id" value="{{ selected_tournament_id|default:'' }}">
+            <input type="hidden" name="category_id" value="{{ selected_category_id|default:'' }}">
+            <input type="hidden" name="subcategory_id" value="{{ selected_subcategory_id|default:'' }}">
+            <div class="col-12">
+              <label class="form-label" for="entry-team-filter">Equipo inscrito para agregar jugador</label>
+              <select id="entry-team-filter" name="entry_team_id" class="form-select" onchange="this.form.submit()">
+                {% for value, label in entry_team_choices %}
+                  <option value="{{ value }}" {% if value|stringformat:"s" == selected_entry_team_id|stringformat:"s" %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+              </select>
+            </div>
+          </form>
+        </section>
+        {% include "shared/collapsible_form.html" with title="Inscribir jugador en equipo inscrito" form=entry_player_form action=entry_player_create_url submit_label="Agregar jugador" %}
+      </div>
     </section>
   {% endif %}
   <section class="panel-card">

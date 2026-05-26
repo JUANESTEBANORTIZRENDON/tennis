@@ -105,7 +105,10 @@ def tournament_list_view(request):
     columns = display_columns(rows, "Tournament")
     for row in rows:
         pk = row_identifier(row, "tournament_id")
-        row["_actions"] = [{"label": "Editar", "url": reverse("tournament_edit", args=[pk])}] if pk else []
+        row["_actions"] = [
+            {"label": "Ver", "url": reverse("tournament_detail", args=[pk])},
+            {"label": "Editar", "url": reverse("tournament_edit", args=[pk])},
+        ] if pk else []
     return render(
         request,
         "shared/entity_list.html",
@@ -117,6 +120,33 @@ def tournament_list_view(request):
             "primary_action_label": "Crear torneo",
             "primary_action_url": reverse("tournament_create"),
             "empty_message": "No hay torneos registrados.",
+        },
+    )
+
+
+@login_required
+def tournament_detail_view(request, tournament_id: int):
+    """Detalle de torneo con categorias y tamanos de cuadros."""
+
+    detail = tournament_service.tournament_detail(tournament_id)
+    tournament = detail["tournament"]
+    if not tournament:
+        messages.warning(request, "No se encontro el torneo solicitado.")
+        return redirect("tournament_list")
+    return render(
+        request,
+        "tournaments/tournament_detail.html",
+        {
+            "title": get_value(tournament, "name", default="Torneo"),
+            "tournament": tournament,
+            "tournament_rows": [tournament],
+            "tournament_columns": display_columns([tournament], "Tournament"),
+            "categories": detail["categories"],
+            "category_columns": display_columns(detail["categories"], "Category"),
+            "subcategories": detail["subcategories"],
+            "subcategory_columns": display_columns(detail["subcategories"], "SubCategory"),
+            "rounds": detail["rounds"],
+            "round_columns": display_columns(detail["rounds"], "Round"),
         },
     )
 

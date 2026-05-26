@@ -15,7 +15,7 @@ from apps.core.db import get_value, row_identifier
 from apps.core.errors import report_safe_error, safe_operation_message
 from apps.core.permissions import director_required, login_required
 from apps.core.presentation import columns_for_section, display_columns
-from apps.players.forms import CloseInjuryForm, EntryForm, InjuryRegistrationForm, PlayerForm, TeamForm, TeamMemberForm
+from apps.players.forms import CloseInjuryForm, CoachAssignmentForm, CoachForm, EntryForm, EntryPlayerForm, InjuryRegistrationForm, PlayerForm, TeamForm, TeamMemberForm
 from apps.players.services import player_service
 from apps.tournaments.services import tournament_service
 
@@ -69,6 +69,12 @@ def _entry_structure_context(request) -> dict:
         "subcategory_options": subcategory_options,
         "subcategory_choices": tournament_service.choice_rows(subcategories, label_keys=("categoria", "name")),
     }
+
+
+def _entry_player_choices(tournament_id: int | None, team_id: int | None) -> list[tuple[str, str]]:
+    if not team_id:
+        return [("", "Seleccione primero un equipo inscrito")]
+    return player_service.available_entry_player_choices(tournament_id, team_id)
 
 
 @login_required
@@ -259,11 +265,82 @@ def team_member_add_view(request):
 
 
 @login_required
+def coach_list_view(request):
+    """Muestra entrenadores, usuario vinculado, equipo y jugadores asignados."""
+
+    selected_coach_id = _selected_int(request, "coach_id")
+    rows = player_service.list_coaches()
+    return render(
+        request,
+        "players/coach_list.html",
+        {
+            "title": "Entrenadores",
+            "subtitle": "Cada entrenador pertenece a un unico equipo y solo puede entrenar jugadores de ese mismo equipo.",
+            "rows": rows,
+            "columns": display_columns(
+                rows,
+                "Coach",
+                preferred=["coach_id", "entrenador", "usuario", "rol_usuario", "equipo", "jugadores", "license_number", "nationality"],
+            ),
+            "coach_form": CoachForm(),
+            "assignment_form": CoachAssignmentForm(
+                selected_coach_id=selected_coach_id,
+                player_choices=player_service.available_coach_player_choices(selected_coach_id),
+            ),
+            "selected_coach_id": selected_coach_id,
+        },
+    )
+
+
+@director_required
+def coach_create_view(request):
+    """Crea entrenadores desde el panel de participantes."""
+
+    form = CoachForm(request.POST or None)
+    if request.method == "POST" and form.is_valid():
+        try:
+            player_service.create_coach(form.cleaned_data)
+        except Exception as exc:
+            report_safe_error(request, exc, safe_operation_message("crear el entrenador"))
+        else:
+            log_action_safe(request, entity_name="Coach", action="create", new_value=form.cleaned_data)
+            messages.success(request, "Entrenador creado usando sp_create_coach.")
+    return redirect("coach_list")
+
+
+@director_required
+def coach_player_add_view(request):
+    """Asigna jugadores a entrenadores con validacion final en PostgreSQL."""
+
+    selected_coach_id = _selected_int(request, "coach_id")
+    form = CoachAssignmentForm(
+        request.POST or None,
+        selected_coach_id=selected_coach_id,
+        player_choices=player_service.available_coach_player_choices(selected_coach_id),
+    )
+    if request.method == "POST" and form.is_valid():
+        try:
+            player_service.assign_coach_to_player(form.cleaned_data)
+        except Exception as exc:
+            report_safe_error(request, exc, safe_operation_message("asignar el jugador al entrenador"))
+        else:
+            log_action_safe(request, entity_name="PlayerCoach", action="create", entity_id=form.cleaned_data.get("coach_id"), new_value=form.cleaned_data)
+            messages.success(request, "Jugador asignado usando sp_assign_coach_to_player.")
+    return redirect("coach_list")
+
+
+@login_required
 def entry_list_view(request):
     """Lista inscripciones con cupos disponibles cuando el esquema lo permite."""
 
     structure = _entry_structure_context(request)
+    selected_entry_team_id = _selected_int(request, "entry_team_id")
     rows = player_service.list_entries_with_slots(structure["selected_tournament_id"], structure["selected_category_id"], structure["selected_subcategory_id"])
+    entry_team_choices = player_service.entered_team_choices(
+        structure["selected_tournament_id"],
+        structure["selected_category_id"],
+        structure["selected_subcategory_id"],
+    )
     return render(
         request,
         "players/entry_list.html",
@@ -275,13 +352,30 @@ def entry_list_view(request):
             "entry_form": EntryForm(
                 subcategory_choices=structure["subcategory_choices"],
                 team_choices=player_service.available_entry_team_choices(structure["selected_subcategory_id"]),
+                fixed_subcategory_id=structure["selected_subcategory_id"],
             ),
+            "entry_player_form": EntryPlayerForm(
+                subcategory_choices=structure["subcategory_choices"],
+                entered_team_choices=entry_team_choices,
+                player_choices=_entry_player_choices(structure["selected_tournament_id"], selected_entry_team_id),
+                fixed_subcategory_id=structure["selected_subcategory_id"],
+                fixed_team_id=selected_entry_team_id,
+            ),
+            "entry_team_choices": entry_team_choices,
+            "selected_entry_team_id": selected_entry_team_id,
             "empty_message": "No hay inscripciones registradas.",
             "entry_create_url": _entry_filter_url(
                 "entry_create",
                 tournament_id=structure["selected_tournament_id"],
                 category_id=structure["selected_category_id"],
                 subcategory_id=structure["selected_subcategory_id"],
+            ),
+            "entry_player_create_url": _entry_filter_url(
+                "entry_player_create",
+                tournament_id=structure["selected_tournament_id"],
+                category_id=structure["selected_category_id"],
+                subcategory_id=structure["selected_subcategory_id"],
+                entry_team_id=selected_entry_team_id,
             ),
             **structure,
         },
@@ -297,6 +391,7 @@ def entry_create_view(request):
         request.POST or None,
         subcategory_choices=structure["subcategory_choices"],
         team_choices=player_service.available_entry_team_choices(structure["selected_subcategory_id"]),
+        fixed_subcategory_id=structure["selected_subcategory_id"],
     )
     if request.method == "POST" and form.is_valid():
         try:
@@ -312,6 +407,44 @@ def entry_create_view(request):
             tournament_id=structure["selected_tournament_id"],
             category_id=structure["selected_category_id"],
             subcategory_id=form.cleaned_data.get("subcategory_id") if form.is_valid() else structure["selected_subcategory_id"],
+        )
+    )
+
+
+@director_required
+def entry_player_create_view(request):
+    """Agrega jugadores a equipos previamente inscritos."""
+
+    structure = _entry_structure_context(request)
+    selected_entry_team_id = _selected_int(request, "entry_team_id")
+    form = EntryPlayerForm(
+        request.POST or None,
+        subcategory_choices=structure["subcategory_choices"],
+        entered_team_choices=player_service.entered_team_choices(
+            structure["selected_tournament_id"],
+            structure["selected_category_id"],
+            structure["selected_subcategory_id"],
+        ),
+        player_choices=_entry_player_choices(structure["selected_tournament_id"], selected_entry_team_id),
+        fixed_subcategory_id=structure["selected_subcategory_id"],
+        fixed_team_id=selected_entry_team_id,
+    )
+    if request.method == "POST" and form.is_valid():
+        try:
+            player_service.add_entry_team_player(form.cleaned_data)
+        except Exception as exc:
+            report_safe_error(request, exc, safe_operation_message("inscribir el jugador en el equipo"))
+        else:
+            log_action_safe(request, entity_name="TeamMember", action="entry_player_add", entity_id=form.cleaned_data.get("team_id"), new_value=form.cleaned_data)
+            messages.success(request, "Jugador agregado al equipo inscrito usando sp_add_entry_team_player.")
+            selected_entry_team_id = form.cleaned_data.get("team_id")
+    return redirect(
+        _entry_filter_url(
+            "entry_list",
+            tournament_id=structure["selected_tournament_id"],
+            category_id=structure["selected_category_id"],
+            subcategory_id=form.cleaned_data.get("subcategory_id") if form.is_valid() else structure["selected_subcategory_id"],
+            entry_team_id=selected_entry_team_id,
         )
     )
 

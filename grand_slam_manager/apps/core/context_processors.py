@@ -13,21 +13,22 @@ from apps.core.permissions import can_view_sensitive, can_write, current_user, i
 
 
 NAV_ITEMS = [
-    ("dashboard", "Dashboard", "dashboard", "Inicio", "all"),
+    ("dashboard", "Resumen", "dashboard", "Resumen", "all"),
+    ("entries", "Inscripciones", "entry_list", "Operacion", "director"),
+    ("matches", "Match Center", "match_list", "Operacion", "all"),
+    ("match_development", "Desarrollo partido", "match_development_list", "Operacion", "director"),
+    ("schedule", "Programacion", "schedule_list", "Operacion", "director"),
+    ("tournaments", "Torneo", "tournament_list", "Competencia", "all"),
+    ("categories", "Categorias", "category_tree", "Competencia", "director"),
+    ("courts", "Canchas", "court_list", "Competencia", "director"),
+    ("teams", "Equipos", "team_list", "Participantes", "director"),
+    ("players", "Jugadores", "player_list", "Participantes", "all"),
+    ("coaches", "Entrenadores", "coach_list", "Participantes", "director"),
+    ("officials", "Oficiales", "official_list", "Participantes", "director"),
+    ("sanctions", "Sanciones", "sanction_list", "Informacion", "all"),
+    ("injuries", "Lesiones", "injury_list", "Informacion", "director"),
     ("users", "Usuarios", "user_list", "Sistema", "admin"),
     ("audit", "Auditoria", "audit_list", "Sistema", "admin"),
-    ("sanctions", "Sanciones", "sanction_list", "Sistema", "all"),
-    ("tournaments", "Torneos", "tournament_list", "Torneo", "all"),
-    ("courts", "Canchas", "court_list", "Torneo", "director"),
-    ("categories", "Categorías", "category_tree", "Torneo", "director"),
-    ("players", "Jugadores", "player_list", "Competencia", "all"),
-    ("injuries", "Lesiones", "injury_list", "Competencia", "director"),
-    ("teams", "Equipos", "team_list", "Competencia", "director"),
-    ("entries", "Inscripciones", "entry_list", "Competencia", "director"),
-    ("matches", "Match Center", "match_list", "Operación", "all"),
-    ("match_development", "Desarrollo partido", "match_development_list", "Operación", "director"),
-    ("schedule", "Programación", "schedule_list", "Operación", "director"),
-    ("officials", "Oficiales", "official_list", "Operación", "director"),
 ]
 
 

@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block page_heading %}{{ title }}{% endblock %}
+{% block content %}
+  <section class="panel-card mb-4">
+    <div class="d-flex flex-wrap justify-content-between gap-3 align-items-start mb-3">
+      <div>
+        <p class="eyebrow mb-1">Torneo</p>
+        <h2 class="section-title mb-1">{{ title }}</h2>
+        <p class="text-muted mb-0">Informacion general, categorias y cuadros configurados para este torneo.</p>
+      </div>
+      <a class="btn btn-outline-primary" href="{% url 'tournament_list' %}">Volver</a>
+    </div>
+    {% include "shared/table.html" with rows=tournament_rows columns=tournament_columns empty_message="No hay informacion del torneo." %}
+  </section>
+
+  <section class="panel-card mb-4">
+    <p class="eyebrow mb-1">Competencia</p>
+    <h2 class="section-title">Categorias</h2>
+    {% include "shared/table.html" with rows=categories columns=category_columns empty_message="No hay categorias para este torneo." %}
+  </section>
+
+  <section class="panel-card mb-4">
+    <p class="eyebrow mb-1">Cuadros</p>
+    <h2 class="section-title">Categorias y tamano de cuadros</h2>
+    {% include "shared/table.html" with rows=subcategories columns=subcategory_columns empty_message="No hay cuadros para este torneo." %}
+  </section>
+
+  <section class="panel-card">
+    <p class="eyebrow mb-1">Rondas</p>
+    <h2 class="section-title">Rondas por cuadro</h2>
+    {% include "shared/table.html" with rows=rounds columns=round_columns empty_message="No hay rondas para este torneo." %}
+  </section>
+{% endblock %}

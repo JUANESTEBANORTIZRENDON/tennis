@@ -48,6 +48,36 @@ class Team(models.Model):
         db_table = "Team"
 
 
+class Coach(models.Model):
+    """Entrenador vinculado opcionalmente a un usuario interno y a un equipo."""
+
+    id = models.IntegerField(primary_key=True, db_column="id")
+    first_name = models.CharField(max_length=80, db_column="first_name")
+    last_name = models.CharField(max_length=80, db_column="last_name")
+    nationality = models.CharField(max_length=3, db_column="nationality")
+    birth_date = models.DateField(db_column="birth_date", blank=True, null=True)
+    license_number = models.CharField(max_length=50, db_column="license_number", blank=True, null=True)
+    user_id = models.IntegerField(db_column="user_id", blank=True, null=True)
+    team_id = models.IntegerField(db_column="team_id", blank=True, null=True)
+
+    class Meta:
+        managed = False
+        db_table = "Coach"
+
+
+class PlayerCoach(models.Model):
+    """Relacion historica entre entrenador y jugador."""
+
+    player_id = models.CharField(max_length=80, db_column="player_id")
+    coach_id = models.IntegerField(db_column="coach_id")
+    start_date = models.DateField(db_column="start_date")
+    end_date = models.DateField(db_column="end_date", blank=True, null=True)
+
+    class Meta:
+        managed = False
+        db_table = "PlayerCoach"
+
+
 class Entry(models.Model):
     """Inscripcion de un equipo en un cuadro."""
 

@@ -694,10 +694,116 @@ a { text-decoration: none; }
 .btn-outline-primary { border-radius: 999px; font-weight: 800; }
 
 /* Tabla generica de templates/shared/table.html. */
+.data-table-panel { display: grid; gap: .85rem; }
+.data-table-tools {
+  display: grid;
+  grid-template-columns: minmax(220px, 1.4fr) auto auto auto;
+  gap: .75rem;
+  align-items: end;
+  padding: .9rem;
+  border: 1px solid rgba(214,165,51,.38);
+  border-radius: 8px;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.98), rgba(255,252,244,.92)),
+    radial-gradient(circle at top right, rgba(214,165,51,.2), transparent 12rem);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.9), 0 12px 26px rgba(16,32,51,.06);
+}
+.data-table-tools .form-label {
+  margin-bottom: .3rem;
+  color: var(--muted);
+  font-size: .76rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+}
+.data-table-count {
+  min-height: 2.35rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  color: var(--muted);
+  font-weight: 900;
+  white-space: nowrap;
+}
+.table-sort-options {
+  display: flex;
+  align-items: center;
+  gap: .35rem;
+  min-height: 2.35rem;
+  margin: 0;
+  padding: .25rem;
+  border: 1px solid rgba(16,42,67,.12);
+  border-radius: 999px;
+  background: linear-gradient(180deg, #fff, #f7f1e2);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.95);
+}
+.table-sort-options label {
+  display: inline-flex;
+  align-items: center;
+  gap: .35rem;
+  margin: 0;
+  min-height: 1.85rem;
+  padding: .25rem .62rem;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  color: var(--navy);
+  font-size: .82rem;
+  font-weight: 800;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.table-sort-options label:has(input:checked) {
+  color: #fff;
+  background: linear-gradient(135deg, #b8871f, #6d4a09);
+  border-color: rgba(109,74,9,.22);
+  box-shadow: 0 8px 16px rgba(109,74,9,.16);
+}
+.table-sort-options input {
+  width: .78rem;
+  height: .78rem;
+  accent-color: #b8871f;
+}
 .data-table-wrap { border-radius: 18px; border: 1px solid var(--line); overflow: hidden; }
 .data-table { margin: 0; font-size: .92rem; }
 .data-table thead th { background: #edf4f8; color: var(--navy); white-space: nowrap; }
 .data-table td { vertical-align: middle; }
+.table-sort-button {
+  display: inline-flex;
+  align-items: center;
+  gap: .35rem;
+  width: auto;
+  min-height: 1.8rem;
+  padding: .2rem .5rem;
+  border: 1px solid rgba(16,42,67,.12);
+  border-radius: 6px;
+  background: linear-gradient(180deg, #fff, #f2efe7);
+  color: var(--navy);
+  font: inherit;
+  font-weight: 900;
+  text-align: left;
+  cursor: pointer;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.9);
+}
+.table-sort-button:hover,
+.table-sort-button.is-active {
+  color: #fff;
+  border-color: rgba(176,122,24,.44);
+  background: linear-gradient(135deg, #b8871f, #17344c);
+  box-shadow: 0 8px 18px rgba(23,52,76,.16);
+}
+.sort-indicator {
+  color: currentColor;
+  font-size: .68rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+.form-field {
+  animation: formFieldArrive .22s ease both;
+}
+@keyframes formFieldArrive {
+  from { opacity: 0; transform: translateY(-6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
 
 /* Badges de estado. El template los aplica cuando un nombre de columna parece
    status/state/active/surface_matches. */
@@ -1255,6 +1361,7 @@ a { text-decoration: none; }
    compriman demasiado. */
 @media (max-width: 1100px) {
   .metric-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .data-table-tools { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .role-action-grid { grid-template-columns: 1fr; }
   .two-column { grid-template-columns: 1fr; }
   .three-column, .quick-actions { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -1273,7 +1380,8 @@ a { text-decoration: none; }
   .panel-admin .content-panel { padding: 1rem; }
   .topbar { display: block; }
   .user-pill { margin-top: 1rem; min-width: 0; }
-  .metric-grid, .two-column, .three-column, .quick-actions, .detail-grid, .filter-grid { grid-template-columns: 1fr; }
+  .metric-grid, .data-table-tools, .two-column, .three-column, .quick-actions, .detail-grid, .filter-grid { grid-template-columns: 1fr; }
+  .data-table-count { justify-content: flex-start; }
   .form-field-target_type > div:not(.form-text) { grid-template-columns: 1fr; }
   .public-nav { position: static; }
   .scoreboard-top { grid-template-columns: 1fr; text-align: center; }

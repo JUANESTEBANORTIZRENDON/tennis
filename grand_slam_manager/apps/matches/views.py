@@ -337,6 +337,7 @@ def match_play_view(request, match_id: int):
             "detail": detail,
             "match": match,
             "match_id": match_id,
+            "set_columns": display_columns(detail.get("sets") or [], "MatchSet"),
             "finish_form": FinishMatchForm(team_choices=team_choices),
             "match_play_finish_url": reverse("match_play_finish", args=[match_id]),
         },

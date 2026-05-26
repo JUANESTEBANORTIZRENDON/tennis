@@ -133,10 +133,82 @@ def add_team_member(data: dict) -> None:
     call_stored_procedure("sp_add_team_member", data)
 
 
+def list_coaches() -> list[dict]:
+    """Lista entrenadores con usuario, equipo y jugadores asignados."""
+
+    return [row for row in fetch_stored_function_rows("sp_coaches_overview_json", [300]) if isinstance(row, dict)]
+
+
+def create_coach(data: dict) -> None:
+    """Crea entrenador con usuario interno opcional y equipo obligatorio."""
+
+    call_stored_procedure("sp_create_coach", data)
+
+
+def assign_coach_to_player(data: dict) -> None:
+    """Asigna un jugador al entrenador mediante reglas de equipo en BD."""
+
+    call_stored_procedure("sp_assign_coach_to_player", data)
+
+
+def available_coach_player_choices(coach_id: int | None) -> list[tuple[str, str]]:
+    """Jugadores del equipo del entrenador que aun no estan asignados a el."""
+
+    choices: list[tuple[str, str]] = [("", "Seleccione un jugador")]
+    rows = fetch_stored_function_rows("sp_available_coach_players_json", [coach_id])
+    for row in rows:
+        if not isinstance(row, dict):
+            continue
+        player_id = get_value(row, "player_id")
+        if player_id in (None, ""):
+            continue
+        label = " - ".join(str(part) for part in [player_id, get_value(row, "jugador"), get_value(row, "equipo")] if part not in (None, ""))
+        choices.append((str(player_id), label))
+    return choices
+
+
 def create_entry(data: dict) -> None:
     """Inscribe un equipo en un cuadro."""
 
     call_stored_procedure("sp_create_entry", data, aliases={"seed": ["seed"]})
+
+
+def add_entry_team_player(data: dict) -> None:
+    """Agrega jugador a un equipo que ya esta inscrito en el cuadro indicado."""
+
+    call_stored_procedure("sp_add_entry_team_player", {"role": "Player", **data})
+
+
+def entered_team_choices(tournament_id: int | None, category_id: int | None, subcategory_id: int | None) -> list[tuple[int | str, str]]:
+    """Equipos que ya tienen inscripcion para el filtro de estructura actual."""
+
+    choices: list[tuple[int | str, str]] = [("", "Seleccione un equipo inscrito")]
+    rows = fetch_stored_function_rows("sp_entered_teams_by_structure_json", [tournament_id, category_id, subcategory_id, 300])
+    for row in rows:
+        if not isinstance(row, dict):
+            continue
+        team_id = get_value(row, "team_id")
+        if team_id in (None, ""):
+            continue
+        label = " - ".join(str(part) for part in [get_value(row, "equipo"), get_value(row, "cuadro"), get_value(row, "jugadores")] if part not in (None, ""))
+        choices.append((team_id, label or str(team_id)))
+    return choices
+
+
+def available_entry_player_choices(tournament_id: int | None, team_id: int | None) -> list[tuple[str, str]]:
+    """Jugadores disponibles para un equipo inscrito, excluyendo el mismo torneo."""
+
+    choices: list[tuple[str, str]] = [("", "Seleccione un jugador")]
+    rows = fetch_stored_function_rows("sp_available_entry_players_json", [tournament_id, team_id, 300])
+    for row in rows:
+        if not isinstance(row, dict):
+            continue
+        player_id = get_value(row, "player_id")
+        if player_id in (None, ""):
+            continue
+        label = " - ".join(str(part) for part in [player_id, get_value(row, "jugador"), get_value(row, "pais")] if part not in (None, ""))
+        choices.append((str(player_id), label))
+    return choices
 
 
 def available_entry_team_choices(subcategory_id: int | None) -> list[tuple[int | str, str]]:

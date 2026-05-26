@@ -3,7 +3,7 @@
   {% if field.is_hidden %}
     {{ field }}
   {% else %}
-    <div class="mb-3 form-field form-field-{{ field.name }}">
+    <div class="mb-3 form-field form-field-{{ field.name }}" data-form-field="{{ field.name }}">
       <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
       {{ field }}
       {% if field.help_text %}<div class="form-text">{{ field.help_text }}</div>{% endif %}

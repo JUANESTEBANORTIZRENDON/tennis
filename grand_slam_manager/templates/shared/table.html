@@ -1,38 +1,158 @@
 {% load grand_slam_extras %}
-{# Tabla reusable: rows vienen de Neon via servicios; columns ya fueron filtradas por presentation.py. #}
-<div class="table-responsive data-table-wrap">
-  <table class="table table-hover align-middle data-table">
-    <thead>
-      <tr>
-        {% for column in columns %}<th>{{ column|humanize_key }}</th>{% endfor %}
-        <th class="text-end">Acciones</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for row in rows %}
+{# Tabla reusable: filas desde servicios; orden y busqueda viven en el cliente. #}
+<div class="data-table-panel">
+  {% if rows and columns %}
+    <div class="data-table-tools" data-table-tools>
+      <div class="data-table-search">
+        <label class="form-label">Buscar</label>
+        <input class="form-control" type="search" placeholder="Buscar en la tabla" data-table-search>
+      </div>
+      <fieldset class="table-sort-options" aria-label="Modo de orden">
+        <label><input type="radio" name="sort-mode-{{ rows|length }}-{{ columns|length }}" value="auto" checked data-sort-mode> Auto</label>
+        <label><input type="radio" name="sort-mode-{{ rows|length }}-{{ columns|length }}" value="alpha" data-sort-mode> A-Z</label>
+        <label><input type="radio" name="sort-mode-{{ rows|length }}-{{ columns|length }}" value="numeric" data-sort-mode> ID/Numero</label>
+      </fieldset>
+      <fieldset class="table-sort-options" aria-label="Direccion">
+        <label><input type="radio" name="sort-dir-{{ rows|length }}-{{ columns|length }}" value="asc" checked data-sort-dir> Asc</label>
+        <label><input type="radio" name="sort-dir-{{ rows|length }}-{{ columns|length }}" value="desc" data-sort-dir> Desc</label>
+      </fieldset>
+      <div class="data-table-count" data-table-count>{{ rows|length }} registros</div>
+    </div>
+  {% endif %}
+
+  <div class="table-responsive data-table-wrap">
+    <table class="table table-hover align-middle data-table">
+      <thead>
         <tr>
           {% for column in columns %}
-            {% with value=row|get_item:column %}
-              <td>
-                {% if column|is_status_column %}
-                  <span class="status-pill {{ value|badge_class }}">{% render_cell value column can_view_sensitive mask_plain_id %}</span>
-                {% else %}
-                  {% render_cell value column can_view_sensitive mask_plain_id %}
-                {% endif %}
-              </td>
-            {% endwith %}
+            <th>
+              <button class="table-sort-button" type="button" data-sort-column="{{ forloop.counter0 }}">
+                <span>{{ column|humanize_key }}</span>
+                <span class="sort-indicator" aria-hidden="true"></span>
+              </button>
+            </th>
           {% endfor %}
-          <td class="text-end">
-            {% for action in row|get_item:"_actions" %}
-              <a class="btn btn-sm btn-outline-primary" href="{{ action.url }}">{{ action.label }}</a>
-            {% empty %}
-              <span class="text-muted">-</span>
-            {% endfor %}
-          </td>
+          <th class="text-end">Acciones</th>
         </tr>
-      {% empty %}
-        <tr><td colspan="{{ columns|length|add:1 }}" class="text-center text-muted py-4">{{ empty_message|default:"No hay datos para mostrar." }}</td></tr>
-      {% endfor %}
-    </tbody>
-  </table>
+      </thead>
+      <tbody>
+        {% for row in rows %}
+          <tr>
+            {% for column in columns %}
+              {% with value=row|get_item:column %}
+                <td>
+                  {% if column|is_status_column %}
+                    <span class="status-pill {{ value|badge_class }}">{% render_cell value column can_view_sensitive mask_plain_id %}</span>
+                  {% else %}
+                    {% render_cell value column can_view_sensitive mask_plain_id %}
+                  {% endif %}
+                </td>
+              {% endwith %}
+            {% endfor %}
+            <td class="text-end">
+              {% for action in row|get_item:"_actions" %}
+                <a class="btn btn-sm btn-outline-primary" href="{{ action.url }}">{{ action.label }}</a>
+              {% empty %}
+                <span class="text-muted">-</span>
+              {% endfor %}
+            </td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="{{ columns|length|add:1 }}" class="text-center text-muted py-4">{{ empty_message|default:"No hay datos para mostrar." }}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
 </div>
+
+<script>
+  (() => {
+    const normalize = (value) => (value || "").toString().trim().toLowerCase();
+    const numericValue = (value) => {
+      const match = (value || "").toString().replace(",", ".").match(/-?\d+(\.\d+)?/);
+      return match ? Number(match[0]) : Number.NaN;
+    };
+
+    document.querySelectorAll(".data-table-panel").forEach((panel, panelIndex) => {
+      if (panel.dataset.enhanced === "true") return;
+      panel.dataset.enhanced = "true";
+      const table = panel.querySelector(".data-table");
+      const tbody = table?.querySelector("tbody");
+      const searchInput = panel.querySelector("[data-table-search]");
+      const countLabel = panel.querySelector("[data-table-count]");
+      const sortButtons = Array.from(panel.querySelectorAll("[data-sort-column]"));
+      const modeInputs = Array.from(panel.querySelectorAll("[data-sort-mode]"));
+      const dirInputs = Array.from(panel.querySelectorAll("[data-sort-dir]"));
+      if (!table || !tbody || !searchInput || !countLabel) return;
+
+      modeInputs.forEach((input) => input.name = `${input.name}-${panelIndex}`);
+      dirInputs.forEach((input) => input.name = `${input.name}-${panelIndex}`);
+
+      let rows = Array.from(tbody.querySelectorAll("tr")).filter((row) => row.querySelectorAll("td").length > 1);
+      let activeColumn = null;
+
+      const selectedValue = (inputs, fallback) => inputs.find((input) => input.checked)?.value || fallback;
+      const cellText = (row, columnIndex) => row.children[columnIndex]?.innerText.trim() || "";
+      const isNumericColumn = (columnIndex) => rows.filter((row) => cellText(row, columnIndex)).every((row) => !Number.isNaN(numericValue(cellText(row, columnIndex))));
+
+      const compareRows = (columnIndex) => {
+        const direction = selectedValue(dirInputs, "asc") === "asc" ? 1 : -1;
+        const mode = selectedValue(modeInputs, "auto");
+        const useNumeric = mode === "numeric" || (mode === "auto" && isNumericColumn(columnIndex));
+
+        return (rowA, rowB) => {
+          const valueA = cellText(rowA, columnIndex);
+          const valueB = cellText(rowB, columnIndex);
+          if (useNumeric) {
+            const numberA = numericValue(valueA);
+            const numberB = numericValue(valueB);
+            if (!Number.isNaN(numberA) && !Number.isNaN(numberB) && numberA !== numberB) {
+              return (numberA - numberB) * direction;
+            }
+          }
+          return valueA.localeCompare(valueB, "es", { numeric: true, sensitivity: "base" }) * direction;
+        };
+      };
+
+      const applySearch = () => {
+        const query = normalize(searchInput.value);
+        let visible = 0;
+        rows.forEach((row) => {
+          const show = !query || normalize(row.innerText).includes(query);
+          row.hidden = !show;
+          if (show) visible += 1;
+        });
+        countLabel.textContent = `${visible} de ${rows.length} registros`;
+      };
+
+      const applySort = (columnIndex) => {
+        activeColumn = columnIndex;
+        rows = rows.sort(compareRows(columnIndex));
+        rows.forEach((row) => tbody.appendChild(row));
+        sortButtons.forEach((button) => {
+          const isActive = Number(button.dataset.sortColumn) === activeColumn;
+          button.classList.toggle("is-active", isActive);
+          button.querySelector(".sort-indicator").textContent = isActive ? (selectedValue(dirInputs, "asc") === "asc" ? "Asc" : "Desc") : "";
+        });
+        applySearch();
+      };
+
+      sortButtons.forEach((button) => {
+        button.addEventListener("click", () => {
+          const columnIndex = Number(button.dataset.sortColumn);
+          if (activeColumn === columnIndex) {
+            const currentDirection = selectedValue(dirInputs, "asc");
+            const nextDirection = currentDirection === "asc" ? "desc" : "asc";
+            dirInputs.forEach((input) => input.checked = input.value === nextDirection);
+          }
+          applySort(columnIndex);
+        });
+      });
+      [...modeInputs, ...dirInputs].forEach((input) => input.addEventListener("change", () => {
+        if (activeColumn !== null) applySort(activeColumn);
+      }));
+      searchInput.addEventListener("input", applySearch);
+      applySearch();
+    });
+  })();
+</script>

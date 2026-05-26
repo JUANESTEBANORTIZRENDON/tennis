@@ -129,6 +129,14 @@ def team_choices() -> list[Choice]:
     return _choices("Team", blank_label="Seleccione un equipo", order_by=["name", "id"], value_candidates=("team_id", "id"))
 
 
+def coach_choices() -> list[Choice]:
+    def label(row: dict) -> str:
+        full_name = _join_label(get_value(row, "first_name"), get_value(row, "last_name")).replace(" - ", " ")
+        return _join_label(get_value(row, "id", "coach_id"), full_name, get_value(row, "license_number"))
+
+    return _choices("Coach", blank_label="Seleccione un entrenador", order_by=["last_name", "first_name", "id"], value_candidates=("coach_id", "id"), label_func=label)
+
+
 def match_choices() -> list[Choice]:
     def label(row: dict) -> str:
         return _join_label(get_value(row, "id", "match_id"), get_value(row, "scheduled_datetime", "scheduled_at"), get_value(row, "status"))
