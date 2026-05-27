@@ -9,7 +9,7 @@
       <p class="mb-0">Datos generales, marcador, programación, oficiales y sanciones relacionadas.</p>
     </div>
     <div class="d-flex gap-2 flex-wrap">
-      <a class="btn btn-light" href="{% url 'match_play' match_id %}">Abrir desarrollo</a>
+      <a class="btn btn-light" href="{{ schedule_url }}">Ir a programacion</a>
       <a class="btn btn-outline-light" href="{% url 'match_list' %}">Volver</a>
     </div>
   </section>

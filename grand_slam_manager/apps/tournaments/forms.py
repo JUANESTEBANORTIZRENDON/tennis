@@ -9,6 +9,7 @@ choices dinamicos vienen de `apps.core.form_choices` o de filas preparadas por
 """
 
 from django import forms
+from django.utils import timezone
 
 from apps.core import form_choices
 from apps.core.forms import BootstrapFormMixin
@@ -43,6 +44,12 @@ class TournamentForm(BootstrapFormMixin, forms.Form):
     surface = forms.ChoiceField(label="Superficie", choices=SURFACE_CHOICES)
     status = forms.ChoiceField(label="Estado", choices=TOURNAMENT_STATUS_CHOICES, initial="Pendiente por inscripciones")
     description = forms.CharField(label="Descripcion", required=False, widget=forms.Textarea(attrs={"rows": 3}))
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        current_year = timezone.localdate().year
+        self.fields["year"].initial = self.initial.get("year", current_year)
+        self.fields["year"].widget.attrs.setdefault("min", current_year)
 
 
 class CourtForm(BootstrapFormMixin, forms.Form):

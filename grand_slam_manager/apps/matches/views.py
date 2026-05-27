@@ -21,6 +21,7 @@ from apps.matches.forms import (
     MatchParticipantForm,
     MatchSetForm,
     RescheduleMatchForm,
+    ScheduleAssignmentForm,
     ScheduleMatchForm,
     SessionForm,
     SessionMatchForm,
@@ -43,23 +44,19 @@ def _filter_url(base_name: str, **params) -> str:
     return f"{base_url}?{query}" if query else base_url
 
 
-def _structure_context(request) -> dict:
+def _selected_structure_context(request) -> dict:
+    """Filtros comunes de torneo, categoria y cuadro para pantallas operativas."""
+
     selected_tournament_id = _selected_int(request, "tournament_id")
     selected_category_id = _selected_int(request, "category_id")
     selected_subcategory_id = _selected_int(request, "subcategory_id")
     tree = tournament_service.category_tree_for_tournament(selected_tournament_id)
     selected_tournament_id = tree.get("selected_tournament_id")
     categories = tree["categories"]
-    rounds = [row for row in tree["rounds"] if not selected_category_id or str(get_value(row, "category_id")) == str(selected_category_id)]
     subcategories = [
         row
         for row in tree["subcategories"]
         if not selected_category_id or str(get_value(row, "category_id")) == str(selected_category_id)
-    ]
-    courts = [
-        row
-        for row in tournament_service.list_courts()
-        if not selected_tournament_id or str(get_value(row, "tournament_id")) == str(selected_tournament_id)
     ]
     tournament_options = [
         {
@@ -82,10 +79,15 @@ def _structure_context(request) -> dict:
     subcategory_options += [
         {
             "id": get_value(row, "id", "subcategory_id"),
-            "label": " - ".join(str(part) for part in [get_value(row, "categoria"), get_value(row, "name", "cuadro")] if part),
+            "label": get_value(row, "name", default="Cuadro"),
             "selected": str(get_value(row, "id", "subcategory_id")) == str(selected_subcategory_id),
         }
         for row in subcategories
+    ]
+    courts = [
+        row
+        for row in tournament_service.list_courts()
+        if not selected_tournament_id or str(get_value(row, "tournament_id")) == str(selected_tournament_id)
     ]
     return {
         "selected_tournament_id": selected_tournament_id,
@@ -94,8 +96,19 @@ def _structure_context(request) -> dict:
         "tournament_options": tournament_options,
         "category_options": category_options,
         "subcategory_options": subcategory_options,
-        "round_choices": tournament_service.choice_rows(rounds, label_keys=("cuadro", "round_name")),
         "court_choices": tournament_service.choice_rows(courts, label_keys=("name", "surface")),
+    }
+
+
+def _structure_context(request) -> dict:
+    context = _selected_structure_context(request)
+    selected_tournament_id = context["selected_tournament_id"]
+    selected_category_id = context["selected_category_id"]
+    tree = tournament_service.category_tree_for_tournament(selected_tournament_id)
+    rounds = [row for row in tree["rounds"] if not selected_category_id or str(get_value(row, "category_id")) == str(selected_category_id)]
+    return {
+        **context,
+        "round_choices": tournament_service.choice_rows(rounds, label_keys=("cuadro", "round_name")),
     }
 
 
@@ -108,8 +121,23 @@ def match_list_view(request):
     columns = display_columns(rows, "Match")
     for row in rows:
         pk = row_identifier(row, "match_id")
-        actions = [{"label": "Center", "url": reverse("match_center", args=[pk])}] if pk else []
-        if pk and (row.get("can_open_today") or str(row.get("estado", "")).lower() == "inprogress"):
+        actions = []
+        if pk:
+            actions.append(
+                {
+                    "label": "Programar",
+                    "url": _filter_url(
+                        "schedule_list",
+                        tournament_id=get_value(row, "tournament_id"),
+                        category_id=get_value(row, "category_id"),
+                        subcategory_id=get_value(row, "subcategory_id"),
+                    ),
+                }
+            )
+        raw_status = str(get_value(row, "_estado_raw", default=""))
+        if pk and raw_status == "Completed":
+            actions.append({"label": "Ver resultados", "url": reverse("match_result", args=[pk])})
+        if pk and (row.get("can_open_today") or raw_status == "InProgress"):
             actions.append({"label": "Desarrollo", "url": reverse("match_play", args=[pk])})
         row["_actions"] = actions
     return render(
@@ -301,6 +329,7 @@ def match_center_view(request, match_id: int):
             "finish_form": FinishMatchForm(team_choices=team_choices),
             "schedule_form": ScheduleMatchForm(),
             "reschedule_form": RescheduleMatchForm(),
+            "schedule_url": reverse("schedule_list"),
         },
     )
 
@@ -384,10 +413,20 @@ def match_development_list_view(request):
     """Lista partidos operables en tablero de desarrollo."""
 
     rows = match_service.list_matches()
-    rows = [row for row in rows if str(row.get("estado", "")).lower() in {"scheduled", "inprogress", "suspended"}]
+    rows = [
+        row
+        for row in rows
+        if str(get_value(row, "_estado_raw", default="")).lower() in {"scheduled", "inprogress", "suspended", "completed"}
+    ]
     for row in rows:
         pk = row_identifier(row, "match_id")
-        row["_actions"] = [{"label": "Abrir tablero", "url": reverse("match_play", args=[pk])}] if pk and (row.get("can_open_today") or str(row.get("estado", "")).lower() == "inprogress") else []
+        raw_status = str(get_value(row, "_estado_raw", default=""))
+        actions = []
+        if pk and raw_status == "Completed":
+            actions.append({"label": "Ver resultados", "url": reverse("match_result", args=[pk])})
+        elif pk and (row.get("can_open_today") or raw_status == "InProgress"):
+            actions.append({"label": "Abrir tablero", "url": reverse("match_play", args=[pk])})
+        row["_actions"] = actions
     return render(
         request,
         "matches/match_development_list.html",
@@ -400,12 +439,35 @@ def match_development_list_view(request):
 
 
 @login_required
+def match_result_view(request, match_id: int):
+    """Resumen de resultado para partidos completados."""
+
+    detail = match_service.match_development_detail(match_id)
+    match = detail.get("match") or {}
+    sets, score_title = match_service.match_result_score_rows(match_id)
+    return render(
+        request,
+        "matches/match_result.html",
+        {
+            "match_id": match_id,
+            "match": match,
+            "sets": sets,
+            "set_columns": display_columns(sets, "MatchSet"),
+            "score_title": score_title,
+            "winner_name": detail.get("winner_name"),
+            "detail_url": reverse("match_center", args=[match_id]),
+            "back_url": reverse("match_development_list"),
+        },
+    )
+
+
+@login_required
 def match_play_view(request, match_id: int):
     """Tablero de desarrollo de partido."""
 
     detail = match_service.match_development_detail(match_id)
     match = detail.get("match") or {}
-    can_open = bool(match.get("can_open_today")) or str(match.get("estado", "")).lower() == "inprogress"
+    can_open = bool(match.get("can_open_today")) or str(match.get("_estado_raw", "")) == "InProgress"
     if not can_open:
         messages.warning(request, "Este partido solo se puede abrir el dia programado.")
         return redirect("match_development_list")
@@ -483,8 +545,18 @@ def match_status_view(request, match_id: int, status: str):
 def schedule_list_view(request):
     """Vista de agenda: partidos y sesiones."""
 
-    matches = match_service.list_matches()
+    structure = _selected_structure_context(request)
+    matches = match_service.list_schedule_matches(
+        structure["selected_tournament_id"],
+        structure["selected_category_id"],
+        structure["selected_subcategory_id"],
+    )
     sessions = match_service.list_sessions()
+    match_choices = match_service.schedule_match_choices(
+        structure["selected_tournament_id"],
+        structure["selected_category_id"],
+        structure["selected_subcategory_id"],
+    )
     return render(
         request,
         "matches/schedule.html",
@@ -493,9 +565,64 @@ def schedule_list_view(request):
             "match_columns": display_columns(matches, "Match"),
             "sessions": sessions,
             "session_columns": display_columns(sessions, "Session"),
+            "schedule_action_url": _filter_url(
+                "schedule_match_assign",
+                tournament_id=structure["selected_tournament_id"],
+                category_id=structure["selected_category_id"],
+                subcategory_id=structure["selected_subcategory_id"],
+            ),
+            "session_create_url": _filter_url(
+                "session_create",
+                tournament_id=structure["selected_tournament_id"],
+                category_id=structure["selected_category_id"],
+                subcategory_id=structure["selected_subcategory_id"],
+            ),
+            "session_match_add_url": _filter_url(
+                "session_match_add",
+                tournament_id=structure["selected_tournament_id"],
+                category_id=structure["selected_category_id"],
+                subcategory_id=structure["selected_subcategory_id"],
+            ),
+            "schedule_form": ScheduleAssignmentForm(match_choices=match_choices, court_choices=structure["court_choices"]),
             "session_form": SessionForm(),
-            "session_match_form": SessionMatchForm(),
+            "session_match_form": SessionMatchForm(match_choices=match_choices),
+            **structure,
         },
+    )
+
+
+@director_required
+def schedule_match_assign_view(request):
+    """Asigna fecha y cancha a un partido ya creado."""
+
+    structure = _selected_structure_context(request)
+    form = ScheduleAssignmentForm(
+        request.POST or None,
+        match_choices=match_service.schedule_match_choices(
+            structure["selected_tournament_id"],
+            structure["selected_category_id"],
+            structure["selected_subcategory_id"],
+        ),
+        court_choices=structure["court_choices"],
+    )
+    if request.method == "POST" and form.is_valid():
+        try:
+            match_service.schedule_match_assignment(form.cleaned_data, request.session.get("user_id"))
+        except Exception as exc:
+            if "player_match_day_conflict" in str(exc):
+                report_safe_error(request, exc, "Ese jugador ya tiene un partido asignado ese dia.")
+            else:
+                report_safe_error(request, exc, safe_operation_message("programar el partido"))
+        else:
+            log_action_safe(request, entity_name="Match", entity_id=form.cleaned_data.get("match_id"), action="schedule_from_programacion", new_value=form.cleaned_data)
+            messages.success(request, "Partido programado correctamente.")
+    return redirect(
+        _filter_url(
+            "schedule_list",
+            tournament_id=structure["selected_tournament_id"],
+            category_id=structure["selected_category_id"],
+            subcategory_id=structure["selected_subcategory_id"],
+        )
     )
 
 
@@ -503,6 +630,7 @@ def schedule_list_view(request):
 def session_create_view(request):
     """Crea sesiones/jornadas de programacion."""
 
+    structure = _selected_structure_context(request)
     form = SessionForm(request.POST or None)
     if request.method == "POST" and form.is_valid():
         try:
@@ -512,14 +640,29 @@ def session_create_view(request):
         else:
             log_action_safe(request, entity_name="Session", action="create", tournament_id=form.cleaned_data.get("tournament_id"), new_value=form.cleaned_data)
             messages.success(request, "Sesion creada usando sp_create_session.")
-    return redirect("schedule_list")
+    return redirect(
+        _filter_url(
+            "schedule_list",
+            tournament_id=structure["selected_tournament_id"],
+            category_id=structure["selected_category_id"],
+            subcategory_id=structure["selected_subcategory_id"],
+        )
+    )
 
 
 @director_required
 def session_match_add_view(request):
     """Asocia partidos a sesiones existentes."""
 
-    form = SessionMatchForm(request.POST or None)
+    structure = _selected_structure_context(request)
+    form = SessionMatchForm(
+        request.POST or None,
+        match_choices=match_service.schedule_match_choices(
+            structure["selected_tournament_id"],
+            structure["selected_category_id"],
+            structure["selected_subcategory_id"],
+        ),
+    )
     if request.method == "POST" and form.is_valid():
         try:
             match_service.add_match_to_session(form.cleaned_data)
@@ -528,6 +671,13 @@ def session_match_add_view(request):
         else:
             log_action_safe(request, entity_name="SessionMatch", action="create", entity_id=form.cleaned_data.get("session_id"), new_value=form.cleaned_data)
             messages.success(request, "Partido asociado a sesion usando sp_add_match_to_session.")
-    return redirect("schedule_list")
+    return redirect(
+        _filter_url(
+            "schedule_list",
+            tournament_id=structure["selected_tournament_id"],
+            category_id=structure["selected_category_id"],
+            subcategory_id=structure["selected_subcategory_id"],
+        )
+    )
 
 

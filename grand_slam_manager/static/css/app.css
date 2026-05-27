@@ -910,6 +910,46 @@ a { text-decoration: none; }
   color: var(--navy);
   font-weight: 900;
 }
+.result-card__players {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  gap: 1rem;
+  align-items: stretch;
+}
+.result-card__players article {
+  display: grid;
+  gap: .35rem;
+  min-height: 6rem;
+  padding: 1rem;
+  border: 1px solid rgba(176,122,24,.22);
+  border-radius: 8px;
+  background: linear-gradient(180deg, #fff, #f7fbfc);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.9);
+}
+.result-card__players span {
+  color: var(--muted);
+  font-size: .76rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+}
+.result-card__players strong {
+  color: var(--navy);
+  font-size: 1.1rem;
+}
+.result-card__players b {
+  align-self: center;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #17344c, #b8871f);
+  color: #fff;
+  font-size: .76rem;
+  text-transform: uppercase;
+}
 .form-field {
   animation: formFieldArrive .22s ease both;
 }

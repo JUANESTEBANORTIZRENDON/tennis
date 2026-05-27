@@ -165,6 +165,7 @@ class EntryPlayerForm(BootstrapFormMixin, forms.Form):
         player_choices=None,
         fixed_subcategory_id=None,
         fixed_team_id=None,
+        hide_team_field=False,
         **kwargs,
     ):
         super().__init__(*args, **kwargs)
@@ -176,4 +177,5 @@ class EntryPlayerForm(BootstrapFormMixin, forms.Form):
             self.fields["subcategory_id"].widget = forms.HiddenInput()
         if fixed_team_id:
             self.fields["team_id"].initial = fixed_team_id
+        if fixed_team_id or hide_team_field:
             self.fields["team_id"].widget = forms.HiddenInput()

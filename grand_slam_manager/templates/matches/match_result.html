@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% load grand_slam_extras %}
+{% block page_heading %}Resultado del partido{% endblock %}
+{% block content %}
+  <section class="hero-panel mb-4">
+    <div>
+      <p class="eyebrow mb-1">Resultado</p>
+      <h2>Partido #{{ match_id }}</h2>
+      <p class="mb-0">{{ match.torneo }} · {{ match.categoria }} · {{ match.cuadro }}</p>
+    </div>
+    <div class="d-flex gap-2 flex-wrap">
+      <a class="btn btn-light" href="{{ detail_url }}">Ver mas</a>
+      <a class="btn btn-outline-light" href="{{ back_url }}">Volver</a>
+    </div>
+  </section>
+
+  <section class="panel-card mb-4 result-card">
+    <div class="result-card__players">
+      <article>
+        <span>Jugador A</span>
+        <strong>{{ match.jugador_a|default:"Por definir" }}</strong>
+      </article>
+      <b>vs</b>
+      <article>
+        <span>Jugador B</span>
+        <strong>{{ match.jugador_b|default:"Por definir" }}</strong>
+      </article>
+    </div>
+    <div class="detail-grid mt-3">
+      <div class="detail-item"><span>Ganador</span><strong>{{ winner_name|default:"Sin ganador registrado" }}</strong></div>
+      <div class="detail-item"><span>Estado</span><strong>{{ match.estado|default:"-" }}</strong></div>
+      <div class="detail-item"><span>Fecha</span><strong>{{ match.fecha_partido|default:"-" }}</strong></div>
+      <div class="detail-item"><span>Cancha</span><strong>{{ match.cancha|default:"-" }}</strong></div>
+    </div>
+  </section>
+
+  <section class="panel-card">
+    <p class="eyebrow mb-1">Marcador</p>
+    <h2 class="section-title">{{ score_title }}</h2>
+    {% include "shared/table.html" with rows=sets columns=set_columns empty_message="No hay sets registrados." %}
+  </section>
+{% endblock %}

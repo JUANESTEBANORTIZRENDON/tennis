@@ -336,6 +336,16 @@ def entry_list_view(request):
     structure = _entry_structure_context(request)
     selected_entry_team_id = _selected_int(request, "entry_team_id")
     rows = player_service.list_entries_with_slots(structure["selected_tournament_id"], structure["selected_category_id"], structure["selected_subcategory_id"])
+    has_available_slots = player_service.entry_scope_has_available_slots(
+        structure["selected_tournament_id"],
+        structure["selected_category_id"],
+        structure["selected_subcategory_id"],
+    )
+    available_slots_count = player_service.entry_scope_available_slots_count(
+        structure["selected_tournament_id"],
+        structure["selected_category_id"],
+        structure["selected_subcategory_id"],
+    )
     entry_team_choices = player_service.entered_team_choices(
         structure["selected_tournament_id"],
         structure["selected_category_id"],
@@ -360,9 +370,13 @@ def entry_list_view(request):
                 player_choices=_entry_player_choices(structure["selected_tournament_id"], selected_entry_team_id),
                 fixed_subcategory_id=structure["selected_subcategory_id"],
                 fixed_team_id=selected_entry_team_id,
+                hide_team_field=True,
             ),
             "entry_team_choices": entry_team_choices,
             "selected_entry_team_id": selected_entry_team_id,
+            "has_available_slots": has_available_slots,
+            "entry_scope_blocked": not has_available_slots,
+            "available_slots_count": available_slots_count,
             "empty_message": "No hay inscripciones registradas.",
             "entry_create_url": _entry_filter_url(
                 "entry_create",
@@ -393,7 +407,12 @@ def entry_create_view(request):
         team_choices=player_service.available_entry_team_choices(structure["selected_subcategory_id"]),
         fixed_subcategory_id=structure["selected_subcategory_id"],
     )
-    if request.method == "POST" and form.is_valid():
+    has_available_slots = player_service.entry_scope_has_available_slots(
+        structure["selected_tournament_id"],
+        structure["selected_category_id"],
+        form.cleaned_data.get("subcategory_id") if form.is_valid() else structure["selected_subcategory_id"],
+    )
+    if request.method == "POST" and form.is_valid() and has_available_slots:
         try:
             player_service.create_entry(form.cleaned_data)
         except Exception as exc:
@@ -401,6 +420,8 @@ def entry_create_view(request):
         else:
             log_action_safe(request, entity_name="Entry", action="create", new_value=form.cleaned_data)
             messages.success(request, "Inscripcion creada usando sp_create_entry.")
+    elif request.method == "POST" and not has_available_slots:
+        messages.warning(request, "El torneo, categoria o cuadro seleccionado ya no tiene cupos disponibles.")
     return redirect(
         _entry_filter_url(
             "entry_list",
@@ -428,8 +449,14 @@ def entry_player_create_view(request):
         player_choices=_entry_player_choices(structure["selected_tournament_id"], selected_entry_team_id),
         fixed_subcategory_id=structure["selected_subcategory_id"],
         fixed_team_id=selected_entry_team_id,
+        hide_team_field=True,
     )
-    if request.method == "POST" and form.is_valid():
+    has_available_slots = player_service.entry_scope_has_available_slots(
+        structure["selected_tournament_id"],
+        structure["selected_category_id"],
+        form.cleaned_data.get("subcategory_id") if form.is_valid() else structure["selected_subcategory_id"],
+    )
+    if request.method == "POST" and form.is_valid() and has_available_slots:
         try:
             player_service.add_entry_team_player(form.cleaned_data)
         except Exception as exc:
@@ -438,6 +465,8 @@ def entry_player_create_view(request):
             log_action_safe(request, entity_name="TeamMember", action="entry_player_add", entity_id=form.cleaned_data.get("team_id"), new_value=form.cleaned_data)
             messages.success(request, "Jugador agregado al equipo inscrito usando sp_add_entry_team_player.")
             selected_entry_team_id = form.cleaned_data.get("team_id")
+    elif request.method == "POST" and not has_available_slots:
+        messages.warning(request, "El torneo, categoria o cuadro seleccionado ya no tiene cupos disponibles.")
     return redirect(
         _entry_filter_url(
             "entry_list",

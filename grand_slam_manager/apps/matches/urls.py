@@ -15,6 +15,7 @@ urlpatterns = [
     path("matches/first-round/create/", views.match_first_round_pairing_create_view, name="match_first_round_pairing_create"),
     path("matches/generate-first-round/", views.match_generate_first_round_view, name="match_generate_first_round"),
     path("matches/development/", views.match_development_list_view, name="match_development_list"),
+    path("matches/<int:match_id>/result/", views.match_result_view, name="match_result"),
     path("matches/<int:match_id>/center/", views.match_center_view, name="match_center"),
     path("matches/<int:match_id>/play/", views.match_play_view, name="match_play"),
     path("matches/<int:match_id>/play/start/", views.match_start_view, name="match_start"),
@@ -28,6 +29,7 @@ urlpatterns = [
     path("matches/<int:match_id>/schedule/", views.match_schedule_view, name="match_schedule"),
     path("matches/<int:match_id>/reschedule/", views.match_reschedule_view, name="match_reschedule"),
     path("schedule/", views.schedule_list_view, name="schedule_list"),
+    path("schedule/matches/assign/", views.schedule_match_assign_view, name="schedule_match_assign"),
     path("schedule/sessions/create/", views.session_create_view, name="session_create"),
     path("schedule/sessions/matches/add/", views.session_match_add_view, name="session_match_add"),
 ]

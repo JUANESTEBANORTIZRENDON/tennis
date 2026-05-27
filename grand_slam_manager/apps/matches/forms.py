@@ -88,6 +88,19 @@ class ScheduleMatchForm(BootstrapFormMixin, forms.Form):
         self.fields["court_id"].choices = court_choices or form_choices.court_choices()
 
 
+class ScheduleAssignmentForm(BootstrapFormMixin, forms.Form):
+    """Asigna fecha y cancha a un partido ya creado."""
+
+    match_id = forms.TypedChoiceField(label="Partido", coerce=int)
+    scheduled_datetime = forms.DateTimeField(label="Fecha y hora", widget=forms.DateTimeInput(attrs={"type": "datetime-local"}))
+    court_id = forms.TypedChoiceField(label="Cancha", coerce=int)
+
+    def __init__(self, *args, match_choices=None, court_choices=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["match_id"].choices = match_choices or form_choices.match_choices()
+        self.fields["court_id"].choices = court_choices or form_choices.court_choices()
+
+
 class RescheduleMatchForm(BootstrapFormMixin, forms.Form):
     """Reprograma un partido y guarda motivo operativo."""
 
@@ -122,7 +135,7 @@ class SessionMatchForm(BootstrapFormMixin, forms.Form):
     match_id = forms.TypedChoiceField(label="Partido", coerce=int)
     order_in_session = forms.IntegerField(label="Orden en sesion", min_value=1, required=False)
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, session_choices=None, match_choices=None, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields["session_id"].choices = form_choices.session_choices()
-        self.fields["match_id"].choices = form_choices.match_choices()
+        self.fields["session_id"].choices = session_choices or form_choices.session_choices()
+        self.fields["match_id"].choices = match_choices or form_choices.match_choices()

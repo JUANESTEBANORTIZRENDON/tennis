@@ -12,6 +12,7 @@ procedimientos almacenados que activan triggers de integridad.
 from __future__ import annotations
 
 from apps.core.db import (
+    fetch_one,
     find_column,
     find_first_existing_table,
     get_value,
@@ -177,6 +178,50 @@ def add_entry_team_player(data: dict) -> None:
     """Agrega jugador a un equipo que ya esta inscrito en el cuadro indicado."""
 
     call_stored_procedure("sp_add_entry_team_player", data)
+
+
+def entry_scope_has_available_slots(tournament_id: int | None, category_id: int | None, subcategory_id: int | None) -> bool:
+    """Indica si el filtro actual aun permite inscribir equipos en algun cuadro."""
+
+    row = fetch_one(
+        """
+        SELECT EXISTS (
+            SELECT 1
+            FROM "SubCategory" sc
+            JOIN "Category" c ON c.id = sc.category_id
+            LEFT JOIN "Entry" e ON e.subcategory_id = sc.id
+            WHERE (%s IS NULL OR c.tournament_id = %s)
+              AND (%s IS NULL OR c.id = %s)
+              AND (%s IS NULL OR sc.id = %s)
+            GROUP BY sc.id, sc.draw_size
+            HAVING sc.draw_size - COUNT(e.id) > 0
+        ) AS has_slots
+        """,
+        [tournament_id, tournament_id, category_id, category_id, subcategory_id, subcategory_id],
+    )
+    return bool(row and row.get("has_slots"))
+
+
+def entry_scope_available_slots_count(tournament_id: int | None, category_id: int | None, subcategory_id: int | None) -> int:
+    """Total de cupos faltantes para el filtro de inscripcion actual."""
+
+    row = fetch_one(
+        """
+        SELECT COALESCE(SUM(GREATEST(slot_data.available_slots, 0)), 0) AS available_slots
+        FROM (
+            SELECT sc.draw_size - COUNT(e.id) AS available_slots
+            FROM "SubCategory" sc
+            JOIN "Category" c ON c.id = sc.category_id
+            LEFT JOIN "Entry" e ON e.subcategory_id = sc.id
+            WHERE (%s IS NULL OR c.tournament_id = %s)
+              AND (%s IS NULL OR c.id = %s)
+              AND (%s IS NULL OR sc.id = %s)
+            GROUP BY sc.id, sc.draw_size
+        ) slot_data
+        """,
+        [tournament_id, tournament_id, category_id, category_id, subcategory_id, subcategory_id],
+    )
+    return int(row.get("available_slots") or 0) if row else 0
 
 
 def entered_team_choices(tournament_id: int | None, category_id: int | None, subcategory_id: int | None) -> list[tuple[int | str, str]]:

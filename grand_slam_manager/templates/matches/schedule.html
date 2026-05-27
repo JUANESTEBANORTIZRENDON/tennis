@@ -1,21 +1,56 @@
 {% extends "base.html" %}
 {% block page_heading %}Programacion{% endblock %}
 {% block content %}
+  <section class="panel-card mb-4">
+    <form method="get" action="{% url 'schedule_list' %}" class="row g-3 align-items-end">
+      <div class="col-12 col-md-4">
+        <label class="form-label" for="schedule-tournament">Torneo</label>
+        <select id="schedule-tournament" name="tournament_id" class="form-select" onchange="this.form.submit()">
+          {% for tournament in tournament_options %}
+            <option value="{{ tournament.id }}" {% if tournament.selected %}selected{% endif %}>{{ tournament.label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-12 col-md-4">
+        <label class="form-label" for="schedule-category">Categoria</label>
+        <select id="schedule-category" name="category_id" class="form-select" onchange="this.form.submit()">
+          {% for category in category_options %}
+            <option value="{{ category.id }}" {% if category.selected %}selected{% endif %}>{{ category.label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-12 col-md-4">
+        <label class="form-label" for="schedule-subcategory">Cuadro</label>
+        <select id="schedule-subcategory" name="subcategory_id" class="form-select" onchange="this.form.submit()">
+          {% for subcategory in subcategory_options %}
+            <option value="{{ subcategory.id }}" {% if subcategory.selected %}selected{% endif %}>{{ subcategory.label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-auto">
+        <button class="btn btn-outline-primary" type="submit">Aplicar</button>
+      </div>
+    </form>
+  </section>
+
   {% if can_write %}
     <section class="two-column mb-4">
-            {% url 'session_create' as session_create_url %}
-      {% url 'session_match_add' as session_match_add_url %}
-      {% include "shared/collapsible_form.html" with title="Crear sesion" form=session_form action=session_create_url submit_label="Crear" %}
-      {% include "shared/collapsible_form.html" with title="Asociar partido" form=session_match_form action=session_match_add_url submit_label="Asociar" %}
+      {% include "shared/collapsible_form.html" with title="Asignar fecha y cancha" form=schedule_form action=schedule_action_url submit_label="Programar partido" force_open=True %}
+      <div>
+        {% include "shared/collapsible_form.html" with title="Crear sesion" form=session_form action=session_create_url submit_label="Crear" %}
+        {% include "shared/collapsible_form.html" with title="Asociar partido a sesion" form=session_match_form action=session_match_add_url submit_label="Asociar" %}
+      </div>
     </section>
   {% endif %}
 
   <section class="panel-card mb-4">
-        <h2 class="section-title">Sesiones</h2>
-    {% include "shared/table.html" with rows=sessions columns=session_columns empty_message="No hay sesiones." %}
+    <p class="eyebrow mb-1">Partidos ya asignados</p>
+    <h2 class="section-title">Programacion de partidos</h2>
+    {% include "shared/table.html" with rows=matches columns=match_columns empty_message="No hay partidos para la estructura seleccionada." %}
   </section>
   <section class="panel-card">
-        <h2 class="section-title">Partidos</h2>
-    {% include "shared/table.html" with rows=matches columns=match_columns empty_message="No hay partidos." %}
+    <p class="eyebrow mb-1">Jornadas</p>
+    <h2 class="section-title">Sesiones</h2>
+    {% include "shared/table.html" with rows=sessions columns=session_columns empty_message="No hay sesiones." %}
   </section>
 {% endblock %}
