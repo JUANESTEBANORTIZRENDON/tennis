@@ -48,7 +48,7 @@ def update_tournament(tournament_id: int, data: dict) -> None:
 
 
 def list_courts() -> list[dict]:
-    """Lista canchas y calcula si la superficie coincide con el torneo."""
+    """Lista canchas globales disponibles para programacion."""
 
     return [row for row in fetch_stored_function_rows("sp_list_courts_json") if isinstance(row, dict)]
 
@@ -119,13 +119,13 @@ def create_subcategory(data: dict) -> None:
 
 
 def create_round(data: dict) -> None:
-    """Crea ronda respetando la firma de sp_create_round."""
+    """Crea ronda desde procesos internos o CRUD administrativo."""
 
     call_stored_procedure("sp_create_round", data, aliases={"round_name": ["round_name"], "round_number": ["round_number"]})
 
 
 def generate_rounds_for_tournament(tournament_id: int) -> None:
-    """Genera fases del cuadro cuando las inscripciones estan completas."""
+    """Genera fases automaticas cuando Match Center prepara el cuadro."""
 
     call_stored_procedure("sp_generate_rounds_for_tournament", {"tournament_id": tournament_id})
 

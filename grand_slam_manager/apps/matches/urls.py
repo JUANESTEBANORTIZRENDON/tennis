@@ -30,6 +30,4 @@ urlpatterns = [
     path("matches/<int:match_id>/reschedule/", views.match_reschedule_view, name="match_reschedule"),
     path("schedule/", views.schedule_list_view, name="schedule_list"),
     path("schedule/matches/assign/", views.schedule_match_assign_view, name="schedule_match_assign"),
-    path("schedule/sessions/create/", views.session_create_view, name="session_create"),
-    path("schedule/sessions/matches/add/", views.session_match_add_view, name="session_match_add"),
 ]

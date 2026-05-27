@@ -1,9 +1,9 @@
-"""Formularios de match center, programacion y sesiones.
+"""Formularios de match center y programacion.
 
 Trazabilidad:
 los campos seleccionables se cargan desde `form_choices` o desde
 `match_service.team_choices_for_match`; las vistas envian `cleaned_data` a
-procedimientos `sp_*` de partido y agenda.
+procedimientos `sp_*` de partido y agenda operativa.
 """
 
 from django import forms
@@ -112,30 +112,3 @@ class RescheduleMatchForm(BootstrapFormMixin, forms.Form):
         super().__init__(*args, **kwargs)
         self.fields["new_court_id"].choices = form_choices.court_choices()
 
-
-class SessionForm(BootstrapFormMixin, forms.Form):
-    """Bloque de programacion que agrupa partidos en una jornada."""
-
-    tournament_id = forms.TypedChoiceField(label="Torneo", coerce=int)
-    name = forms.CharField(label="Nombre sesion", max_length=120)
-    start_datetime = forms.DateTimeField(label="Inicio", widget=forms.DateTimeInput(attrs={"type": "datetime-local"}))
-    end_datetime = forms.DateTimeField(label="Fin", widget=forms.DateTimeInput(attrs={"type": "datetime-local"}))
-    status = forms.CharField(label="Estado", initial="scheduled", max_length=60)
-    notes = forms.CharField(label="Notas", required=False, widget=forms.Textarea(attrs={"rows": 2}))
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.fields["tournament_id"].choices = form_choices.tournament_choices()
-
-
-class SessionMatchForm(BootstrapFormMixin, forms.Form):
-    """Asocia partidos a sesiones con orden opcional."""
-
-    session_id = forms.TypedChoiceField(label="Sesion", coerce=int)
-    match_id = forms.TypedChoiceField(label="Partido", coerce=int)
-    order_in_session = forms.IntegerField(label="Orden en sesion", min_value=1, required=False)
-
-    def __init__(self, *args, session_choices=None, match_choices=None, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.fields["session_id"].choices = session_choices or form_choices.session_choices()
-        self.fields["match_id"].choices = match_choices or form_choices.match_choices()

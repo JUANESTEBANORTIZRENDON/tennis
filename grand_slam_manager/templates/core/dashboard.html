@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% load grand_slam_extras %}
-{% block page_heading %}Dashboard{% endblock %}
+{% block page_heading %}Resumen{% endblock %}
 {% block content %}
   <section class="hero-panel mb-4">
         <div>
@@ -41,7 +41,7 @@
       </a>
       <a class="role-action-card action-schedule" href="{% url 'schedule_list' %}">
         <span>Programación</span>
-        <strong>Organizar agenda y sesiones</strong>
+        <strong>Asignar fechas y canchas</strong>
       </a>
     {% endif %}
   </section>

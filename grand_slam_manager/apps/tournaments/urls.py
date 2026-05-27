@@ -18,6 +18,4 @@ urlpatterns = [
     path("categories/", views.category_tree_view, name="category_tree"),
     path("categories/create/", views.category_create_view, name="category_create"),
     path("subcategories/create/", views.subcategory_create_view, name="subcategory_create"),
-    path("rounds/create/", views.round_create_view, name="round_create"),
-    path("rounds/generate/", views.round_generate_view, name="round_generate"),
 ]

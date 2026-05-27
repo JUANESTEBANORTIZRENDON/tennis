@@ -98,8 +98,8 @@ class TeamMemberForm(BootstrapFormMixin, forms.Form):
 
     team_id = forms.TypedChoiceField(label="Equipo", coerce=int)
     player_id = forms.ChoiceField(label="Jugador")
-    role = forms.CharField(label="Rol", initial="Player", max_length=80)
-    start_date = forms.DateField(label="Fecha inicio", widget=forms.DateInput(attrs={"type": "date"}))
+    role = forms.CharField(label="Rol", initial="Player", max_length=80, widget=forms.HiddenInput())
+    start_date = forms.DateField(label="Fecha inicio", widget=forms.DateInput(attrs={"type": "date"}), initial=timezone.localdate)
 
     def __init__(self, *args, team_choices=None, player_choices=None, selected_team_id=None, **kwargs):
         super().__init__(*args, **kwargs)

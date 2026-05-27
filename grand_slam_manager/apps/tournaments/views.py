@@ -1,4 +1,4 @@
-"""Vistas de torneos, canchas y estructura Category/SubCategory/Round.
+"""Vistas de torneos, canchas y estructura Category/SubCategory.
 
 Trazabilidad:
 `apps.tournaments.urls` -> estas vistas -> formularios del modulo ->
@@ -15,7 +15,7 @@ from apps.core.db import get_value, row_identifier
 from apps.core.errors import report_safe_error, safe_operation_message
 from apps.core.permissions import director_required, login_required
 from apps.core.presentation import display_columns
-from apps.tournaments.forms import CategoryForm, CourtForm, RoundForm, SubCategoryForm, TournamentForm
+from apps.tournaments.forms import CategoryForm, CourtForm, SubCategoryForm, TournamentForm
 from apps.tournaments.services import tournament_service
 
 
@@ -38,14 +38,13 @@ def _category_url(tournament_id: int | None) -> str:
     return f"{base_url}?tournament_id={tournament_id}" if tournament_id else base_url
 
 
-def _render_category_tree(request, *, category_form=None, subcategory_form=None, round_form=None):
+def _render_category_tree(request, *, category_form=None, subcategory_form=None):
     """Renderiza la pagina combinada de categorias conservando errores."""
 
     selected_tournament_id = _selected_tournament_id(request)
     tree = tournament_service.category_tree_for_tournament(selected_tournament_id)
     selected_tournament_id = tree.get("selected_tournament_id")
     category_choices = tournament_service.choice_rows(tree["categories"], label_keys=("name", "mode", "gender"))
-    subcategory_choices = tournament_service.choice_rows(tree["subcategories"], label_keys=("name", "categoria"))
     tournament_options = [
         {
             "id": get_value(row, "id", "tournament_id"),
@@ -63,38 +62,14 @@ def _render_category_tree(request, *, category_form=None, subcategory_form=None,
             "selected_category_url": _category_url(selected_tournament_id),
             "category_create_url": f"{reverse('category_create')}?tournament_id={selected_tournament_id}" if selected_tournament_id else reverse("category_create"),
             "subcategory_create_url": f"{reverse('subcategory_create')}?tournament_id={selected_tournament_id}" if selected_tournament_id else reverse("subcategory_create"),
-            "round_create_url": f"{reverse('round_create')}?tournament_id={selected_tournament_id}" if selected_tournament_id else reverse("round_create"),
-            "round_generate_url": reverse("round_generate"),
             "tournament_options": tournament_options,
             "category_form": category_form or CategoryForm(tournament_id=selected_tournament_id),
             "subcategory_form": subcategory_form or SubCategoryForm(category_choices=category_choices),
-            "round_form": round_form or RoundForm(subcategory_choices=subcategory_choices),
             "category_columns": tournament_service.category_columns(tree["categories"], "Category"),
             "subcategory_columns": tournament_service.category_columns(tree["subcategories"], "SubCategory"),
             "round_columns": tournament_service.category_columns(tree["rounds"], "Round"),
         },
     )
-
-
-def _add_round_database_error(form, exc: Exception) -> None:
-    """Traduce restricciones SQL conocidas a errores de formulario legibles."""
-
-    message = str(exc)
-    if "chk_round_best_of_sets" in message:
-        form.add_error("best_of_sets", "Selecciona 1, 3 o 5 sets.")
-    elif "uq_round_business" in message:
-        form.add_error("round_number", "Ya existe una ronda con ese numero para el cuadro seleccionado.")
-    else:
-        form.add_error(None, "No se pudo crear la ronda. Revisa los datos e intentalo nuevamente.")
-
-
-def _round_generation_message(exc: Exception) -> str:
-    message = str(exc)
-    if "draw_not_full" in message or "tournament_entries_incomplete" in message:
-        return "Antes de generar rondas debes completar todas las inscripciones del cuadro."
-    if "invalid_grand_slam_draw_size" in message:
-        return "El tamano del cuadro debe ser 2, 4, 8, 16, 32, 64 o 128."
-    return safe_operation_message("generar las rondas")
 
 
 @login_required
@@ -189,7 +164,7 @@ def tournament_edit_view(request, tournament_id: int):
 
 @login_required
 def court_list_view(request):
-    """Lista canchas y muestra si su superficie coincide con el torneo."""
+    """Lista canchas globales disponibles para programar partidos."""
 
     rows = tournament_service.list_courts()
     return render(
@@ -197,7 +172,7 @@ def court_list_view(request):
         "tournaments/court_list.html",
         {
             "title": "Canchas",
-            "subtitle": "La columna surface_matches ayuda a validar que la superficie de la cancha coincida con el torneo.",
+            "subtitle": "Canchas globales: se asignan al partido en Programacion o Match Center.",
             "rows": rows,
             "columns": display_columns(rows, "Court"),
             "primary_action_label": "Crear cancha",
@@ -218,7 +193,7 @@ def court_create_view(request):
         except Exception as exc:
             report_safe_error(request, exc, safe_operation_message("crear la cancha"))
         else:
-            log_action_safe(request, entity_name="Court", action="create", tournament_id=form.cleaned_data.get("tournament_id"), new_value=form.cleaned_data)
+            log_action_safe(request, entity_name="Court", action="create", new_value=form.cleaned_data)
             messages.success(request, "Cancha creada correctamente.")
             return redirect("court_list")
     return render(request, "shared/form_page.html", {"title": "Crear cancha", "form": form, "back_url": reverse("court_list")})
@@ -271,43 +246,3 @@ def subcategory_create_view(request):
         messages.error(request, "Revisa los campos del cuadro antes de crearlo.")
         return _render_category_tree(request, subcategory_form=form)
     return redirect(_category_url(tree.get("selected_tournament_id")))
-
-
-@director_required
-def round_create_view(request):
-    """Crea una ronda validando errores de formulario y restricciones SQL."""
-
-    selected_tournament_id = _selected_tournament_id(request)
-    tree = tournament_service.category_tree_for_tournament(selected_tournament_id)
-    subcategory_choices = tournament_service.choice_rows(tree["subcategories"], label_keys=("name", "categoria"))
-    form = RoundForm(request.POST or None, subcategory_choices=subcategory_choices)
-    if request.method == "POST" and form.is_valid():
-        try:
-            tournament_service.create_round(form.cleaned_data)
-        except Exception as exc:
-            report_safe_error(request, exc)
-            _add_round_database_error(form, exc)
-            return _render_category_tree(request, round_form=form)
-        else:
-            log_action_safe(request, entity_name="Round", action="create", new_value=form.cleaned_data)
-            messages.success(request, "Ronda creada correctamente.")
-    elif request.method == "POST":
-        messages.error(request, "Revisa los campos de la ronda antes de crearla.")
-        return _render_category_tree(request, round_form=form)
-    return redirect(_category_url(tree.get("selected_tournament_id")))
-
-
-@director_required
-def round_generate_view(request):
-    """Genera rondas para los cuadros completos del torneo seleccionado."""
-
-    tournament_id = _selected_tournament_id(request)
-    if request.method == "POST" and tournament_id:
-        try:
-            tournament_service.generate_rounds_for_tournament(tournament_id)
-        except Exception as exc:
-            report_safe_error(request, exc, _round_generation_message(exc))
-        else:
-            log_action_safe(request, entity_name="Tournament", entity_id=tournament_id, action="generate_rounds")
-            messages.success(request, "Rondas generadas segun el tamano de cada cuadro.")
-    return redirect(_category_url(tournament_id))

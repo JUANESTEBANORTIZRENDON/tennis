@@ -241,25 +241,6 @@ def reschedule_match(match_id: int, data: dict, user_id: int | None) -> None:
     call_stored_procedure("sp_reschedule_match", payload)
 
 
-def list_sessions() -> list[dict]:
-    """Lista sesiones/jornadas usando la tabla disponible."""
-
-    table = find_first_existing_table(["Session", "TournamentSession"])
-    return stored_select_table(table or "Session", order_by_candidates=["start_datetime", "id"])
-
-
-def create_session(data: dict) -> None:
-    """Crea sesion de programacion."""
-
-    call_stored_procedure("sp_create_session", data)
-
-
-def add_match_to_session(data: dict) -> None:
-    """Agrega partido a una sesion."""
-
-    call_stored_procedure("sp_add_match_to_session", data)
-
-
 def _rows_for_match(table_candidates: list[str], match_id: int) -> tuple[str | None, list[dict]]:
     """Busca filas relacionadas al partido en la primera tabla existente."""
 

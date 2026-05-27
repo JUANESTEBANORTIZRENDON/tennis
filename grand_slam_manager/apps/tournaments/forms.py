@@ -1,7 +1,7 @@
 """Formularios para estructura competitiva del torneo.
 
-El flujo jerarquico es Tournament -> Category -> SubCategory -> Round. Las reglas
-que ya estan en BD se reflejan aqui para fallar antes del procedimiento.
+El flujo operativo es Tournament -> Category -> SubCategory. Las rondas se
+generan desde Match Center y avanzan automaticamente segun los resultados.
 
 Trazabilidad:
 choices dinamicos vienen de `apps.core.form_choices` o de filas preparadas por
@@ -23,7 +23,6 @@ SURFACE_CHOICES = [
 ]
 GENDER_CHOICES = [("M", "M"), ("F", "F")]
 MODE_CHOICES = [("Singles", "Singles"), ("Doubles", "Doubles")]
-BEST_OF_SETS_CHOICES = [(1, "1 set"), (3, "Mejor de 3 sets"), (5, "Mejor de 5 sets")]
 DRAW_SIZE_CHOICES = [(size, f"{size} jugadores/equipos") for size in (2, 4, 8, 16, 32, 64, 128)]
 TOURNAMENT_STATUS_CHOICES = [
     ("Pendiente por inscripciones", "Pendiente por inscripciones"),
@@ -62,7 +61,7 @@ class TournamentForm(BootstrapFormMixin, forms.Form):
 
 
 class CourtForm(BootstrapFormMixin, forms.Form):
-    """Cancha asociada a un torneo y su superficie."""
+    """Cancha global disponible para programar partidos."""
 
     name = forms.CharField(label="Nombre de cancha", max_length=120)
     capacity = forms.IntegerField(label="Capacidad", min_value=0)
@@ -101,23 +100,3 @@ class SubCategoryForm(BootstrapFormMixin, forms.Form):
     def __init__(self, *args, category_choices=None, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields["category_id"].choices = category_choices or form_choices.category_choices()
-
-
-class RoundForm(BootstrapFormMixin, forms.Form):
-    """Ronda/fase dentro de un cuadro; best_of_sets solo acepta 1, 3 o 5."""
-
-    round_name = forms.CharField(label="Nombre ronda", max_length=120)
-    subcategory_id = forms.TypedChoiceField(label="Cuadro", coerce=int)
-    round_number = forms.IntegerField(label="Numero de ronda", min_value=1)
-    best_of_sets = forms.TypedChoiceField(
-        label="Mejor de sets",
-        choices=BEST_OF_SETS_CHOICES,
-        coerce=int,
-        initial=3,
-        help_text="La base solo permite rondas a 1, 3 o 5 sets.",
-    )
-    description = forms.CharField(label="Descripcion", required=False, widget=forms.Textarea(attrs={"rows": 2}))
-
-    def __init__(self, *args, subcategory_choices=None, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.fields["subcategory_id"].choices = subcategory_choices or form_choices.subcategory_choices()
