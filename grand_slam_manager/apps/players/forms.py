@@ -5,13 +5,18 @@ los choices salen de `apps.core.form_choices` o de servicios que filtran por
 torneo/cuadro; las vistas envian `cleaned_data` a `player_service`.
 """
 
+from datetime import timedelta
+
 from django import forms
+from django.utils import timezone
 
 from apps.core import form_choices
 from apps.core.forms import BootstrapFormMixin
 
 GENDER_CHOICES = [("M", "M"), ("F", "F")]
 HAND_CHOICES = [("R", "R"), ("L", "L"), ("A", "A")]
+DOCUMENT_TYPE_CHOICES = [("Passport", "Pasaporte"), ("National ID", "Documento nacional"), ("Citizenship Card", "Cedula"), ("Identity Card", "Tarjeta de identidad"), ("Foreign ID", "Documento extranjero"), ("Driver License", "Licencia de conduccion")]
+COUNTRY_CHOICES = [("", "Seleccione un pais"), ("ARG", "Argentina"), ("AUS", "Australia"), ("BRA", "Brasil"), ("CAN", "Canada"), ("CHL", "Chile"), ("CHN", "China"), ("COL", "Colombia"), ("CRI", "Costa Rica"), ("CUB", "Cuba"), ("ECU", "Ecuador"), ("ESP", "Espana"), ("FRA", "Francia"), ("DEU", "Alemania"), ("GBR", "Reino Unido"), ("IND", "India"), ("ITA", "Italia"), ("JPN", "Japon"), ("KOR", "Corea del Sur"), ("MEX", "Mexico"), ("NLD", "Paises Bajos"), ("PAN", "Panama"), ("PER", "Peru"), ("PRT", "Portugal"), ("RUS", "Rusia"), ("SRB", "Serbia"), ("SWE", "Suecia"), ("CHE", "Suiza"), ("URY", "Uruguay"), ("USA", "Estados Unidos"), ("VEN", "Venezuela")]
 QUALIFYING_METHOD_CHOICES = [
     ("Direct", "Directo"),
     ("Wildcard", "Invitación"),
@@ -25,18 +30,24 @@ class PlayerForm(BootstrapFormMixin, forms.Form):
     """Registro completo de jugador que alimenta sp_create_player."""
 
     id = forms.CharField(label="ID jugador/documento", max_length=80)
-    document_type = forms.CharField(label="Tipo documento", max_length=40)
-    issuer_country = forms.CharField(label="País emisor", max_length=3)
+    document_type = forms.ChoiceField(label="Tipo documento", choices=DOCUMENT_TYPE_CHOICES)
+    issuer_country = forms.ChoiceField(label="Pais emisor", choices=COUNTRY_CHOICES)
     first_name = forms.CharField(label="Nombres", max_length=120)
     last_name = forms.CharField(label="Apellidos", max_length=120)
     gender = forms.ChoiceField(label="Genero", choices=GENDER_CHOICES)
     birth_date = forms.DateField(label="Fecha nacimiento", widget=forms.DateInput(attrs={"type": "date"}))
-    country_code = forms.CharField(label="Código país", max_length=3)
+    country_code = forms.ChoiceField(label="Pais deportivo", choices=COUNTRY_CHOICES)
     height_cm = forms.IntegerField(label="Estatura cm", required=False)
     weight_kg = forms.IntegerField(label="Peso kg", required=False)
     hand = forms.ChoiceField(label="Mano", choices=HAND_CHOICES)
-    turned_pro_year = forms.IntegerField(label="Año profesional", required=False)
+    turned_pro_year = forms.IntegerField(label="Ano profesional", required=False)
     biography = forms.CharField(label="Biografia", required=False, widget=forms.Textarea(attrs={"rows": 3}))
+
+    def clean_birth_date(self):
+        birth_date = self.cleaned_data["birth_date"]
+        if birth_date > timezone.localdate() - timedelta(days=15 * 365):
+            raise forms.ValidationError("El jugador debe tener minimo 15 anos.")
+        return birth_date
 
 
 class InjuryRegistrationForm(BootstrapFormMixin, forms.Form):
@@ -101,9 +112,8 @@ class TeamMemberForm(BootstrapFormMixin, forms.Form):
 
 
 class CoachForm(BootstrapFormMixin, forms.Form):
-    """Crea entrenadores vinculados a un usuario interno y a un unico equipo."""
+    """Crea entrenadores vinculados a un unico equipo."""
 
-    user_id = forms.TypedChoiceField(label="Usuario entrenador", coerce=int, required=False, empty_value=None)
     team_id = forms.TypedChoiceField(label="Equipo", coerce=int)
     first_name = forms.CharField(label="Nombres", max_length=80)
     last_name = forms.CharField(label="Apellidos", max_length=80)
@@ -113,7 +123,6 @@ class CoachForm(BootstrapFormMixin, forms.Form):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields["user_id"].choices = form_choices.user_choices()
         self.fields["team_id"].choices = form_choices.team_choices()
 
 

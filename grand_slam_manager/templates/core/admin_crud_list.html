@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block page_heading %}{{ title }}{% endblock %}
+{% block content %}
+  <section class="panel-card mb-4">
+    <form method="get" class="row g-3 align-items-end">
+      {% if tables %}
+        <div class="col-12 col-md-5">
+          <label class="form-label" for="admin-table-select">Tabla</label>
+          <select id="admin-table-select" class="form-select" onchange="if (this.value) window.location.href = this.value;">
+            <option value="{% url 'admin_crud_tables' %}">Selecciona una tabla</option>
+            {% for table in tables %}
+              <option value="{% url 'admin_crud_table' table.table_name %}" {% if table.table_name == selected_table %}selected{% endif %}>{{ table.table_name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      {% endif %}
+      {% if selected_table %}
+        <div class="col-12 col-md-5">
+          <label class="form-label" for="admin-search">Buscar</label>
+          <input id="admin-search" class="form-control" type="search" name="q" value="{{ search }}" placeholder="Buscar en la tabla">
+        </div>
+        <div class="col-auto">
+          <button class="btn btn-outline-primary" type="submit">Aplicar</button>
+        </div>
+        {% if primary_action_url %}
+          <div class="col-auto ms-md-auto">
+            <a class="btn btn-court" href="{{ primary_action_url }}">{{ primary_action_label }}</a>
+          </div>
+        {% endif %}
+      {% endif %}
+    </form>
+  </section>
+
+  <section class="panel-card">
+    <p class="eyebrow mb-1">Administrador</p>
+    <h2 class="section-title">{{ title }}</h2>
+    {% if subtitle %}<p class="text-muted">{{ subtitle }}</p>{% endif %}
+    {% include "shared/table.html" with rows=rows columns=columns empty_message="No hay registros para mostrar." %}
+  </section>
+{% endblock %}

@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% load grand_slam_extras %}
+{% block page_heading %}{{ title }}{% endblock %}
+{% block content %}
+  <section class="panel-card narrow-card">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <div>
+        <p class="eyebrow mb-1">Confirmacion</p>
+        <h2 class="section-title mb-0">{{ title }}</h2>
+      </div>
+      <a class="btn btn-outline-secondary" href="{{ back_url }}">Volver</a>
+    </div>
+    <p class="text-muted">Esta accion eliminara el registro seleccionado.</p>
+    <div class="data-table-panel mb-3">
+      <div class="table-responsive data-table-wrap">
+        <table class="table table-hover align-middle data-table">
+          <tbody>
+            {% for key, value in row.items %}
+              <tr>
+                <th>{{ key|humanize_key }}</th>
+                <td>{% render_cell value key can_view_sensitive mask_plain_id %}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <form method="post">
+      {% csrf_token %}
+      <button class="btn btn-danger" type="submit">Eliminar registro</button>
+    </form>
+  </section>
+{% endblock %}

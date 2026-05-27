@@ -19,13 +19,13 @@ Victory's es una aplicacion web en Django 5 para administrar torneos deportivos.
 - Modelos Django `managed = False` para tablas existentes.
 - Servicios por modulo para consultas SQL y procedimientos almacenados `sp_*`.
 - Landing publica con datos resumidos y sin datos sensibles.
-- Panel administrativo con torneos, jugadores, partidos, oficiales, sanciones, auditoria y usuarios.
+- Panel administrativo con torneos, jugadores, partidos, oficiales, sanciones, auditoria, usuarios y CRUD tecnico de tablas.
 
 ## Requisitos
 
 - Python 3.12 o superior.
 - Entorno virtual del proyecto o dependencias instaladas.
-- Base Neon/PostgreSQL ya creada.
+- Base PostgreSQL/Neon. La carpeta `DOCUMENTACION/` contiene DDL, procedimientos, triggers y datos de prueba para pgAdmin.
 - Variables de entorno en `.env`.
 
 ## Instalacion local
@@ -65,10 +65,11 @@ EMAIL_2FA_ENABLED=False
 
 ## Ejecutar
 
-No ejecutes migraciones sobre Neon para estas tablas. La app usa tablas existentes y sesiones firmadas en cookies.
+Las migraciones del proyecto son SQL controlado con `RunSQL`; no se usan migraciones automaticas de modelos gestionados.
 
 ```powershell
 .\.venv\Scripts\python.exe manage.py check
+.\.venv\Scripts\python.exe manage.py migrate
 .\.venv\Scripts\python.exe manage.py runserver 127.0.0.1:8000
 ```
 
@@ -135,6 +136,7 @@ Administrativas:
 - `/sanctions/`
 - `/users/`
 - `/users/create/`
+- `/admin-data/`
 - `/audit/`
 
 ## Notas tecnicas
@@ -144,6 +146,10 @@ Administrativas:
 - Las escrituras deportivas siguen concentradas en servicios y procedimientos almacenados.
 - La creacion de usuarios internos se realiza desde `apps/accounts/services/user_service.py`.
 - Las migraciones recomendadas son SQL con `RunSQL`, no migraciones automaticas sobre modelos existentes.
+- El estado de un torneo nuevo siempre inicia como `Pendiente por inscripciones`.
+- Un jugador solo puede tener un equipo activo a la vez; PostgreSQL lo valida con trigger e indice unico parcial.
+- Las canchas son globales y se asignan al programar partidos o al crear emparejamientos de primera ronda.
+- Match Center organiza solo la primera ronda; las rondas siguientes se alimentan automaticamente con ganadores.
 - Ya se aplico una migracion para que `Tournament.location` y `Court.location` sean texto, no JSON.
 - Los datos sensibles se enmascaran o se omiten en vistas publicas.
 - `.env` esta ignorado por `.gitignore`.

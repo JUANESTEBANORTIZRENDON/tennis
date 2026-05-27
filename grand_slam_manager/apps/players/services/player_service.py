@@ -122,6 +122,18 @@ def list_teams() -> list[dict]:
     return stored_select_table("Team", order_by_candidates=["name", "id"])
 
 
+def team_members(team_id: int | None) -> list[dict]:
+    """Jugadores activos del equipo seleccionado."""
+
+    if not team_id:
+        return []
+    return [
+        row
+        for row in fetch_stored_function_rows("sp_team_members_json", [team_id, 300])
+        if isinstance(row, dict)
+    ]
+
+
 def create_team(data: dict) -> None:
     """Crea equipo mediante procedimiento almacenado."""
 
@@ -281,6 +293,8 @@ def available_team_member_player_choices(team_id: int | None) -> list[tuple[str,
     """Jugadores que aun no pertenecen al equipo seleccionado."""
 
     choices: list[tuple[str, str]] = [("", "Seleccione un jugador")]
+    if not team_id:
+        return [("", "Seleccione primero un equipo")]
     rows = fetch_stored_function_rows("sp_available_team_member_players_json", [team_id])
     for row in rows:
         if not isinstance(row, dict):

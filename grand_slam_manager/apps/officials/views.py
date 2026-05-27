@@ -49,7 +49,7 @@ def official_create_view(request):
             report_safe_error(request, exc, safe_operation_message("crear el oficial"))
         else:
             log_action_safe(request, entity_name="Official", action="create", new_value=form.cleaned_data)
-            messages.success(request, "Oficial creado usando sp_create_official.")
+            messages.success(request, "Oficial creado correctamente.")
     return redirect("official_list")
 
 
@@ -65,5 +65,5 @@ def official_assign_view(request):
             report_safe_error(request, exc, safe_operation_message("asignar oficial"))
         else:
             log_action_safe(request, entity_name="OfficialAssignment", action="create", entity_id=form.cleaned_data.get("match_id"), new_value=form.cleaned_data)
-            messages.success(request, "Oficial asignado usando sp_assign_official_to_match.")
+            messages.success(request, "Oficial asignado correctamente.")
     return redirect("official_list")

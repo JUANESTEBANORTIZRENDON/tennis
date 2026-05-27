@@ -23,8 +23,6 @@ from apps.matches.forms import (
     RescheduleMatchForm,
     ScheduleAssignmentForm,
     ScheduleMatchForm,
-    SessionForm,
-    SessionMatchForm,
 )
 from apps.matches.services import match_service
 from apps.tournaments.services import tournament_service
@@ -84,11 +82,7 @@ def _selected_structure_context(request) -> dict:
         }
         for row in subcategories
     ]
-    courts = [
-        row
-        for row in tournament_service.list_courts()
-        if not selected_tournament_id or str(get_value(row, "tournament_id")) == str(selected_tournament_id)
-    ]
+    courts = tournament_service.list_courts()
     return {
         "selected_tournament_id": selected_tournament_id,
         "selected_category_id": selected_category_id,
@@ -256,6 +250,8 @@ def match_first_round_pairing_create_view(request):
                     "subcategory_id": _selected_int(request, "pair_subcategory_id") or subcategory_id,
                     "team_a_id": _selected_int(request, "team_a_id"),
                     "team_b_id": _selected_int(request, "team_b_id"),
+                    "court_id": _selected_int(request, "court_id"),
+                    "scheduled_datetime": request.POST.get("scheduled_datetime"),
                 }
             )
         except Exception as exc:
@@ -298,7 +294,7 @@ def match_create_view(request):
             report_safe_error(request, exc, safe_operation_message("crear el partido"))
         else:
             log_action_safe(request, entity_name="Match", action="create", new_value=form.cleaned_data)
-            messages.success(request, "Partido creado usando sp_create_match.")
+            messages.success(request, "Partido creado correctamente.")
         return redirect(
             _filter_url(
                 "match_list",
@@ -377,35 +373,35 @@ def _handle_match_action_to_play(request, match_id: int, form_class, service_fun
 def match_add_participant_view(request, match_id: int):
     """Agrega participante al partido."""
 
-    return _handle_match_action(request, match_id, MatchParticipantForm, match_service.add_match_participant, "Participante agregado usando sp_add_match_participant.", "add_participant")
+    return _handle_match_action(request, match_id, MatchParticipantForm, match_service.add_match_participant, "Participante agregado correctamente.", "add_participant")
 
 
 @director_required
 def match_register_set_view(request, match_id: int):
     """Registra set del partido."""
 
-    return _handle_match_action(request, match_id, MatchSetForm, match_service.register_match_set, "Set registrado usando sp_register_match_set.", "register_set")
+    return _handle_match_action(request, match_id, MatchSetForm, match_service.register_match_set, "Set registrado correctamente.", "register_set")
 
 
 @director_required
 def match_finish_view(request, match_id: int):
     """Finaliza partido."""
 
-    return _handle_match_action(request, match_id, FinishMatchForm, match_service.finish_match, "Partido finalizado usando sp_finish_match.", "finish")
+    return _handle_match_action(request, match_id, FinishMatchForm, match_service.finish_match, "Partido finalizado correctamente.", "finish")
 
 
 @director_required
 def match_schedule_view(request, match_id: int):
     """Programa partido usando el usuario actual como responsable."""
 
-    return _handle_match_action(request, match_id, ScheduleMatchForm, match_service.schedule_match, "Partido programado usando sp_schedule_match.", "schedule", include_user=True)
+    return _handle_match_action(request, match_id, ScheduleMatchForm, match_service.schedule_match, "Partido programado correctamente.", "schedule", include_user=True)
 
 
 @director_required
 def match_reschedule_view(request, match_id: int):
     """Reprograma partido usando el usuario actual como responsable."""
 
-    return _handle_match_action(request, match_id, RescheduleMatchForm, match_service.reschedule_match, "Partido reprogramado usando sp_reschedule_match.", "reschedule", include_user=True)
+    return _handle_match_action(request, match_id, RescheduleMatchForm, match_service.reschedule_match, "Partido reprogramado correctamente.", "reschedule", include_user=True)
 
 
 @login_required
@@ -478,6 +474,7 @@ def match_play_view(request, match_id: int):
         {
             "detail": detail,
             "match": match,
+            "match_status": str(match.get("_estado_raw", "")),
             "match_id": match_id,
             "set_columns": display_columns(detail.get("sets") or [], "MatchSet"),
             "finish_form": FinishMatchForm(team_choices=team_choices),
@@ -543,7 +540,7 @@ def match_status_view(request, match_id: int, status: str):
 
 @login_required
 def schedule_list_view(request):
-    """Vista de agenda: partidos y sesiones."""
+    """Vista de programacion: asignacion de fecha, hora y cancha."""
 
     structure = _selected_structure_context(request)
     matches = match_service.list_schedule_matches(
@@ -551,7 +548,6 @@ def schedule_list_view(request):
         structure["selected_category_id"],
         structure["selected_subcategory_id"],
     )
-    sessions = match_service.list_sessions()
     match_choices = match_service.schedule_match_choices(
         structure["selected_tournament_id"],
         structure["selected_category_id"],
@@ -563,29 +559,13 @@ def schedule_list_view(request):
         {
             "matches": matches,
             "match_columns": display_columns(matches, "Match"),
-            "sessions": sessions,
-            "session_columns": display_columns(sessions, "Session"),
             "schedule_action_url": _filter_url(
                 "schedule_match_assign",
                 tournament_id=structure["selected_tournament_id"],
                 category_id=structure["selected_category_id"],
                 subcategory_id=structure["selected_subcategory_id"],
             ),
-            "session_create_url": _filter_url(
-                "session_create",
-                tournament_id=structure["selected_tournament_id"],
-                category_id=structure["selected_category_id"],
-                subcategory_id=structure["selected_subcategory_id"],
-            ),
-            "session_match_add_url": _filter_url(
-                "session_match_add",
-                tournament_id=structure["selected_tournament_id"],
-                category_id=structure["selected_category_id"],
-                subcategory_id=structure["selected_subcategory_id"],
-            ),
             "schedule_form": ScheduleAssignmentForm(match_choices=match_choices, court_choices=structure["court_choices"]),
-            "session_form": SessionForm(),
-            "session_match_form": SessionMatchForm(match_choices=match_choices),
             **structure,
         },
     )
@@ -625,59 +605,5 @@ def schedule_match_assign_view(request):
         )
     )
 
-
-@director_required
-def session_create_view(request):
-    """Crea sesiones/jornadas de programacion."""
-
-    structure = _selected_structure_context(request)
-    form = SessionForm(request.POST or None)
-    if request.method == "POST" and form.is_valid():
-        try:
-            match_service.create_session(form.cleaned_data)
-        except Exception as exc:
-            report_safe_error(request, exc, safe_operation_message("crear la sesion"))
-        else:
-            log_action_safe(request, entity_name="Session", action="create", tournament_id=form.cleaned_data.get("tournament_id"), new_value=form.cleaned_data)
-            messages.success(request, "Sesion creada usando sp_create_session.")
-    return redirect(
-        _filter_url(
-            "schedule_list",
-            tournament_id=structure["selected_tournament_id"],
-            category_id=structure["selected_category_id"],
-            subcategory_id=structure["selected_subcategory_id"],
-        )
-    )
-
-
-@director_required
-def session_match_add_view(request):
-    """Asocia partidos a sesiones existentes."""
-
-    structure = _selected_structure_context(request)
-    form = SessionMatchForm(
-        request.POST or None,
-        match_choices=match_service.schedule_match_choices(
-            structure["selected_tournament_id"],
-            structure["selected_category_id"],
-            structure["selected_subcategory_id"],
-        ),
-    )
-    if request.method == "POST" and form.is_valid():
-        try:
-            match_service.add_match_to_session(form.cleaned_data)
-        except Exception as exc:
-            report_safe_error(request, exc, safe_operation_message("asociar el partido"))
-        else:
-            log_action_safe(request, entity_name="SessionMatch", action="create", entity_id=form.cleaned_data.get("session_id"), new_value=form.cleaned_data)
-            messages.success(request, "Partido asociado a sesion usando sp_add_match_to_session.")
-    return redirect(
-        _filter_url(
-            "schedule_list",
-            tournament_id=structure["selected_tournament_id"],
-            category_id=structure["selected_category_id"],
-            subcategory_id=structure["selected_subcategory_id"],
-        )
-    )
 
 

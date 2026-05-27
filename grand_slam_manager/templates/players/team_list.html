@@ -24,6 +24,15 @@
       {% include "shared/collapsible_form.html" with title="Agregar integrante" form=member_form action=team_member_add_url submit_label="Agregar" %}
     </section>
   {% endif %}
+  <section class="panel-card mb-4">
+    <p class="eyebrow mb-1">Integrantes</p>
+    <h2 class="section-title">Jugadores del equipo seleccionado</h2>
+    {% if selected_team_id %}
+      {% include "shared/table.html" with rows=selected_team_members columns=member_columns empty_message="Este equipo no tiene jugadores activos." %}
+    {% else %}
+      <p class="text-muted mb-0">Selecciona un equipo para ver solamente sus jugadores.</p>
+    {% endif %}
+  </section>
   <section class="panel-card">
         <p class="eyebrow mb-1">Equipos</p>
     <h2 class="section-title">{{ title }}</h2>

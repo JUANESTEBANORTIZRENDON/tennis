@@ -60,7 +60,7 @@ def sanction_create_view(request):
             report_safe_error(request, exc, safe_operation_message("crear la sancion"))
         else:
             log_action_safe(request, entity_name="Sanction", action="create", new_value=form.cleaned_data)
-            messages.success(request, "Sancion creada usando sp_create_sanction.")
+            messages.success(request, "Sancion creada correctamente.")
     else:
         messages.error(request, "Formulario de sancion invalido. Revisa que solo exista un sujeto seleccionado.")
     return redirect("sanction_list")
@@ -78,7 +78,7 @@ def sanction_appeal_create_view(request):
             report_safe_error(request, exc, safe_operation_message("crear la apelacion"))
         else:
             log_action_safe(request, entity_name="SanctionAppeal", action="create", entity_id=form.cleaned_data.get("sanction_id"), new_value=form.cleaned_data)
-            messages.success(request, "Apelacion creada usando sp_create_sanction_appeal.")
+            messages.success(request, "Apelacion creada correctamente.")
     else:
         messages.error(request, "Formulario de apelacion invalido.")
     return redirect("sanction_list")

@@ -114,7 +114,7 @@ def player_create_view(request):
             report_safe_error(request, exc, safe_operation_message("crear el jugador"))
         else:
             log_action_safe(request, entity_name="Player", action="create", new_value=form.cleaned_data)
-            messages.success(request, "Jugador creado usando sp_create_player.")
+            messages.success(request, "Jugador creado correctamente.")
             return redirect("player_list")
     return render(request, "shared/form_page.html", {"title": "Crear jugador", "form": form, "back_url": reverse("player_list")})
 
@@ -180,7 +180,7 @@ def injury_register_view(request):
             report_safe_error(request, exc, safe_operation_message("registrar la lesion"))
         else:
             log_action_safe(request, entity_name="Injury", action="create_and_assign", new_value=form.cleaned_data)
-            messages.success(request, "Lesion registrada usando sp_create_injury y sp_assign_injury_to_player.")
+            messages.success(request, "Lesion registrada correctamente.")
             return redirect("injury_list")
     return render(request, "shared/form_page.html", {"title": "Registrar lesion", "form": form, "back_url": reverse("injury_list")})
 
@@ -198,7 +198,7 @@ def injury_close_view(request):
             report_safe_error(request, exc, safe_operation_message("cerrar la lesion"))
         else:
             log_action_safe(request, entity_name="Injury", action="close", entity_id=form.cleaned_data.get("injury_id"), new_value=form.cleaned_data)
-            messages.success(request, "Lesion cerrada usando sp_close_injury. No hay accion para reactivarla.")
+            messages.success(request, "Lesion cerrada correctamente. No hay accion para reactivarla.")
             return redirect("injury_list")
     return render(request, "shared/form_page.html", {"title": "Cerrar lesion", "form": form, "back_url": reverse("injury_list")})
 
@@ -209,6 +209,7 @@ def team_list_view(request):
 
     selected_team_id = _selected_int(request, "team_id")
     rows = player_service.list_teams()
+    selected_team_members = player_service.team_members(selected_team_id)
     return render(
         request,
         "players/team_list.html",
@@ -222,6 +223,8 @@ def team_list_view(request):
                 selected_team_id=selected_team_id,
                 player_choices=player_service.available_team_member_player_choices(selected_team_id),
             ),
+            "selected_team_members": selected_team_members,
+            "member_columns": display_columns(selected_team_members, "TeamMember"),
             "selected_team_id": selected_team_id,
         },
     )
@@ -239,7 +242,7 @@ def team_create_view(request):
             report_safe_error(request, exc, safe_operation_message("crear el equipo"))
         else:
             log_action_safe(request, entity_name="Team", action="create", new_value=form.cleaned_data)
-            messages.success(request, "Equipo creado usando sp_create_team.")
+            messages.success(request, "Equipo creado correctamente.")
     return redirect("team_list")
 
 
@@ -260,7 +263,7 @@ def team_member_add_view(request):
             if count not in {1, 2}:
                 messages.warning(request, "Advertencia: valida si el cuadro es Singles o Doubles; este equipo tiene un numero inusual de integrantes.")
             log_action_safe(request, entity_name="TeamMember", action="create", entity_id=data.get("team_id"), new_value=data)
-            messages.success(request, "Integrante agregado usando sp_add_team_member.")
+            messages.success(request, "Integrante agregado correctamente.")
     return redirect("team_list")
 
 
@@ -280,7 +283,7 @@ def coach_list_view(request):
             "columns": display_columns(
                 rows,
                 "Coach",
-                preferred=["coach_id", "entrenador", "usuario", "rol_usuario", "equipo", "jugadores", "license_number", "nationality"],
+                preferred=["coach_id", "entrenador", "equipo", "jugadores", "license_number", "nationality"],
             ),
             "coach_form": CoachForm(),
             "assignment_form": CoachAssignmentForm(
@@ -304,7 +307,7 @@ def coach_create_view(request):
             report_safe_error(request, exc, safe_operation_message("crear el entrenador"))
         else:
             log_action_safe(request, entity_name="Coach", action="create", new_value=form.cleaned_data)
-            messages.success(request, "Entrenador creado usando sp_create_coach.")
+            messages.success(request, "Entrenador creado correctamente.")
     return redirect("coach_list")
 
 
@@ -325,7 +328,7 @@ def coach_player_add_view(request):
             report_safe_error(request, exc, safe_operation_message("asignar el jugador al entrenador"))
         else:
             log_action_safe(request, entity_name="PlayerCoach", action="create", entity_id=form.cleaned_data.get("coach_id"), new_value=form.cleaned_data)
-            messages.success(request, "Jugador asignado usando sp_assign_coach_to_player.")
+            messages.success(request, "Jugador asignado correctamente.")
     return redirect("coach_list")
 
 
@@ -336,6 +339,7 @@ def entry_list_view(request):
     structure = _entry_structure_context(request)
     selected_entry_team_id = _selected_int(request, "entry_team_id")
     rows = player_service.list_entries_with_slots(structure["selected_tournament_id"], structure["selected_category_id"], structure["selected_subcategory_id"])
+    selected_entry_team_members = player_service.team_members(selected_entry_team_id)
     has_available_slots = player_service.entry_scope_has_available_slots(
         structure["selected_tournament_id"],
         structure["selected_category_id"],
@@ -374,6 +378,8 @@ def entry_list_view(request):
             ),
             "entry_team_choices": entry_team_choices,
             "selected_entry_team_id": selected_entry_team_id,
+            "selected_entry_team_members": selected_entry_team_members,
+            "entry_team_member_columns": display_columns(selected_entry_team_members, "TeamMember"),
             "has_available_slots": has_available_slots,
             "entry_scope_blocked": not has_available_slots,
             "available_slots_count": available_slots_count,
@@ -419,7 +425,7 @@ def entry_create_view(request):
             report_safe_error(request, exc, safe_operation_message("crear la inscripcion"))
         else:
             log_action_safe(request, entity_name="Entry", action="create", new_value=form.cleaned_data)
-            messages.success(request, "Inscripcion creada usando sp_create_entry.")
+            messages.success(request, "Inscripcion creada correctamente.")
     elif request.method == "POST" and not has_available_slots:
         messages.warning(request, "El torneo, categoria o cuadro seleccionado ya no tiene cupos disponibles.")
     return redirect(
@@ -463,7 +469,7 @@ def entry_player_create_view(request):
             report_safe_error(request, exc, safe_operation_message("inscribir el jugador en el equipo"))
         else:
             log_action_safe(request, entity_name="TeamMember", action="entry_player_add", entity_id=form.cleaned_data.get("team_id"), new_value=form.cleaned_data)
-            messages.success(request, "Jugador agregado al equipo inscrito usando sp_add_entry_team_player.")
+            messages.success(request, "Jugador agregado al equipo inscrito correctamente.")
             selected_entry_team_id = form.cleaned_data.get("team_id")
     elif request.method == "POST" and not has_available_slots:
         messages.warning(request, "El torneo, categoria o cuadro seleccionado ya no tiene cupos disponibles.")

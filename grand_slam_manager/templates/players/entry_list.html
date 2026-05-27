@@ -79,6 +79,11 @@
               <h2 class="section-title mb-0">Agregar jugador a equipo inscrito</h2>
               <span class="luxury-chip">Faltan {{ available_slots_count }} cupos</span>
             </div>
+            {% if selected_entry_team_id %}
+              <div class="mb-3">
+                {% include "shared/table.html" with rows=selected_entry_team_members columns=entry_team_member_columns empty_message="El equipo seleccionado aun no tiene jugadores activos." %}
+              </div>
+            {% endif %}
             <form method="post" action="{{ entry_player_create_url }}" novalidate>
               {% csrf_token %}
               {% include "shared/form_fields.html" with form=entry_player_form %}

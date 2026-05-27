@@ -155,7 +155,7 @@ def tournament_detail_view(request, tournament_id: int):
 def tournament_create_view(request):
     """Crea torneos mediante sp_create_tournament."""
 
-    form = TournamentForm(request.POST or None)
+    form = TournamentForm(request.POST or None, force_pending_status=True)
     if request.method == "POST" and form.is_valid():
         try:
             tournament_service.create_tournament(form.cleaned_data)
@@ -163,7 +163,7 @@ def tournament_create_view(request):
             report_safe_error(request, exc, safe_operation_message("crear el torneo"))
         else:
             log_action_safe(request, entity_name="Tournament", action="create", new_value=form.cleaned_data)
-            messages.success(request, "Torneo creado usando sp_create_tournament.")
+            messages.success(request, "Torneo creado correctamente.")
             return redirect("tournament_list")
     return render(request, "shared/form_page.html", {"title": "Crear torneo", "form": form, "back_url": reverse("tournament_list")})
 
@@ -182,7 +182,7 @@ def tournament_edit_view(request, tournament_id: int):
             report_safe_error(request, exc, safe_operation_message("actualizar el torneo"))
         else:
             log_action_safe(request, entity_name="Tournament", entity_id=tournament_id, action="update", new_value=form.cleaned_data)
-            messages.success(request, "Torneo actualizado usando sp_update_tournament.")
+            messages.success(request, "Torneo actualizado correctamente.")
             return redirect("tournament_list")
     return render(request, "shared/form_page.html", {"title": "Editar torneo", "form": form, "back_url": reverse("tournament_list")})
 
@@ -219,7 +219,7 @@ def court_create_view(request):
             report_safe_error(request, exc, safe_operation_message("crear la cancha"))
         else:
             log_action_safe(request, entity_name="Court", action="create", tournament_id=form.cleaned_data.get("tournament_id"), new_value=form.cleaned_data)
-            messages.success(request, "Cancha creada usando sp_create_court.")
+            messages.success(request, "Cancha creada correctamente.")
             return redirect("court_list")
     return render(request, "shared/form_page.html", {"title": "Crear cancha", "form": form, "back_url": reverse("court_list")})
 
@@ -244,7 +244,7 @@ def category_create_view(request):
             report_safe_error(request, exc, safe_operation_message("crear la categoria"))
         else:
             log_action_safe(request, entity_name="Category", action="create", tournament_id=form.cleaned_data.get("tournament_id"), new_value=form.cleaned_data)
-            messages.success(request, "Categoria creada usando sp_create_category.")
+            messages.success(request, "Categoria creada correctamente.")
     elif request.method == "POST":
         messages.error(request, "Revisa los campos de la categoria antes de crearla.")
         return _render_category_tree(request, category_form=form)
@@ -266,7 +266,7 @@ def subcategory_create_view(request):
             report_safe_error(request, exc, safe_operation_message("crear el cuadro"))
         else:
             log_action_safe(request, entity_name="SubCategory", action="create", new_value=form.cleaned_data)
-            messages.success(request, "Cuadro creado usando sp_create_subcategory.")
+            messages.success(request, "Cuadro creado correctamente.")
     elif request.method == "POST":
         messages.error(request, "Revisa los campos del cuadro antes de crearlo.")
         return _render_category_tree(request, subcategory_form=form)
@@ -290,7 +290,7 @@ def round_create_view(request):
             return _render_category_tree(request, round_form=form)
         else:
             log_action_safe(request, entity_name="Round", action="create", new_value=form.cleaned_data)
-            messages.success(request, "Ronda creada usando sp_create_round.")
+            messages.success(request, "Ronda creada correctamente.")
     elif request.method == "POST":
         messages.error(request, "Revisa los campos de la ronda antes de crearla.")
         return _render_category_tree(request, round_form=form)

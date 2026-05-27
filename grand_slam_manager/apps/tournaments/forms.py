@@ -45,27 +45,30 @@ class TournamentForm(BootstrapFormMixin, forms.Form):
     status = forms.ChoiceField(label="Estado", choices=TOURNAMENT_STATUS_CHOICES, initial="Pendiente por inscripciones")
     description = forms.CharField(label="Descripcion", required=False, widget=forms.Textarea(attrs={"rows": 3}))
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, force_pending_status: bool = False, **kwargs):
+        self.force_pending_status = force_pending_status
         super().__init__(*args, **kwargs)
         current_year = timezone.localdate().year
         self.fields["year"].initial = self.initial.get("year", current_year)
         self.fields["year"].widget.attrs.setdefault("min", current_year)
+        if self.force_pending_status:
+            self.fields["status"].initial = "Pendiente por inscripciones"
+            self.fields["status"].widget = forms.HiddenInput()
+
+    def clean_status(self):
+        if self.force_pending_status:
+            return "Pendiente por inscripciones"
+        return self.cleaned_data["status"]
 
 
 class CourtForm(BootstrapFormMixin, forms.Form):
     """Cancha asociada a un torneo y su superficie."""
 
-    tournament_id = forms.TypedChoiceField(label="Torneo", coerce=int)
     name = forms.CharField(label="Nombre de cancha", max_length=120)
     capacity = forms.IntegerField(label="Capacidad", min_value=0)
     surface = forms.ChoiceField(label="Superficie", choices=SURFACE_CHOICES)
     indoor = forms.BooleanField(label="Cubierta/indoor", required=False)
     location = forms.CharField(label="Dirección de la cancha", max_length=255, required=False)
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        # El select viene de Neon por `form_choices.tournament_choices`.
-        self.fields["tournament_id"].choices = form_choices.tournament_choices()
 
 
 class CategoryForm(BootstrapFormMixin, forms.Form):

@@ -42,14 +42,20 @@
     {% endwith %}
   </section>
 
-  {% if can_write and match.estado != "Completed" %}
+  {% if can_write and match_status != "Completed" %}
     <section class="quick-actions mb-4">
       <article class="panel-card compact-card">
         <h3 class="mini-title">Estado</h3>
         <div class="d-grid gap-2">
-          <form method="post" action="{% url 'match_start' match_id %}">{% csrf_token %}<button class="btn btn-court w-100" type="submit">Iniciar partido</button></form>
-          <form method="post" action="{% url 'match_status' match_id 'Suspended' %}">{% csrf_token %}<button class="btn btn-outline-secondary w-100" type="submit">Suspender</button></form>
-          <form method="post" action="{% url 'match_status' match_id 'InProgress' %}">{% csrf_token %}<button class="btn btn-outline-primary w-100" type="submit">Reanudar</button></form>
+          {% if match_status == "Scheduled" %}
+            <form method="post" action="{% url 'match_start' match_id %}">{% csrf_token %}<button class="btn btn-court w-100" type="submit">Iniciar partido</button></form>
+          {% endif %}
+          {% if match_status == "InProgress" %}
+            <form method="post" action="{% url 'match_status' match_id 'Suspended' %}">{% csrf_token %}<button class="btn btn-outline-secondary w-100" type="submit">Suspender</button></form>
+          {% endif %}
+          {% if match_status == "Suspended" %}
+            <form method="post" action="{% url 'match_status' match_id 'InProgress' %}">{% csrf_token %}<button class="btn btn-outline-primary w-100" type="submit">Reanudar</button></form>
+          {% endif %}
         </div>
       </article>
       <article class="panel-card compact-card point-panel">
@@ -58,17 +64,17 @@
         <div class="point-controls">
           <form method="post" action="{% url 'match_play_point' match_id 'A' %}">
             {% csrf_token %}
-            <button class="btn btn-player-a w-100" type="submit" {% if match.estado != "InProgress" %}disabled{% endif %}>Punto {{ match.jugador_a|default:"Jugador A" }}</button>
+            <button class="btn btn-player-a w-100" type="submit" {% if match_status != "InProgress" %}disabled{% endif %}>Punto {{ match.jugador_a|default:"Jugador A" }}</button>
           </form>
           <form method="post" action="{% url 'match_play_point' match_id 'B' %}">
             {% csrf_token %}
-            <button class="btn btn-player-b w-100" type="submit" {% if match.estado != "InProgress" %}disabled{% endif %}>Punto {{ match.jugador_b|default:"Jugador B" }}</button>
+            <button class="btn btn-player-b w-100" type="submit" {% if match_status != "InProgress" %}disabled{% endif %}>Punto {{ match.jugador_b|default:"Jugador B" }}</button>
           </form>
         </div>
       </article>
       {% include "shared/collapsible_form.html" with eyebrow="Cierre" title="Finalizar partido" form=finish_form action=match_play_finish_url submit_label="Finalizar" %}
     </section>
-  {% elif match.estado == "Completed" %}
+  {% elif match_status == "Completed" %}
     <section class="panel-card mb-4">
       <h2 class="section-title">Partido finalizado</h2>
       <p class="mb-0">Ganador: <strong>{{ detail.winner_name|default:"Equipo ganador registrado" }}</strong></p>

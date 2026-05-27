@@ -28,6 +28,7 @@ NAV_ITEMS = [
     ("sanctions", "Sanciones", "sanction_list", "Informacion", "all"),
     ("injuries", "Lesiones", "injury_list", "Informacion", "director"),
     ("users", "Usuarios", "user_list", "Sistema", "admin"),
+    ("admin_crud", "CRUD BD", "admin_crud_tables", "Sistema", "admin"),
     ("audit", "Auditoria", "audit_list", "Sistema", "admin"),
 ]
 

@@ -34,12 +34,8 @@
   </section>
 
   {% if can_write %}
-    <section class="two-column mb-4">
+    <section class="panel-card mb-4 narrow-card">
       {% include "shared/collapsible_form.html" with title="Asignar fecha y cancha" form=schedule_form action=schedule_action_url submit_label="Programar partido" force_open=True %}
-      <div>
-        {% include "shared/collapsible_form.html" with title="Crear sesion" form=session_form action=session_create_url submit_label="Crear" %}
-        {% include "shared/collapsible_form.html" with title="Asociar partido a sesion" form=session_match_form action=session_match_add_url submit_label="Asociar" %}
-      </div>
     </section>
   {% endif %}
 
@@ -47,10 +43,5 @@
     <p class="eyebrow mb-1">Partidos ya asignados</p>
     <h2 class="section-title">Programacion de partidos</h2>
     {% include "shared/table.html" with rows=matches columns=match_columns empty_message="No hay partidos para la estructura seleccionada." %}
-  </section>
-  <section class="panel-card">
-    <p class="eyebrow mb-1">Jornadas</p>
-    <h2 class="section-title">Sesiones</h2>
-    {% include "shared/table.html" with rows=sessions columns=session_columns empty_message="No hay sesiones." %}
   </section>
 {% endblock %}

@@ -98,6 +98,14 @@
                   {% endfor %}
                 </select>
               </label>
+              <label class="form-label mb-0">Cancha</label>
+              <select class="form-select" name="court_id" required>
+                {% for value, label in court_choices %}
+                  <option value="{{ value }}">{{ label }}</option>
+                {% endfor %}
+              </select>
+              <label class="form-label mb-0">Fecha y hora</label>
+              <input class="form-control" type="datetime-local" name="scheduled_datetime" required>
               <button class="btn btn-court w-100" type="submit">Crear partido</button>
             </form>
           </article>
